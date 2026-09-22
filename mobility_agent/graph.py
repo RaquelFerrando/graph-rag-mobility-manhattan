@@ -203,6 +203,23 @@ class BehaviorGraph:
         top_scores = top_scores[sorted_idx]
         return [{'corpus_id': idx, 'score': float(score)} for idx, score in zip(top_indices, top_scores)]
 
+    def _similarity_search(self, query_text, k=20):
+        """Vector similarity search (paper sec 3.2): embed the query profile
+        with the same model used for reference persons (mxbai-embed-large),
+        then rank all 'person' nodes by cosine similarity. Returns the top-k
+        as (node_id, score), as expected by _get_reference_graph. This method
+        was referenced but missing from the released code."""
+        person_nodes = [
+            n for n, d in self.behavior_graph.nodes(data=True)
+            if d.get('type') == 'person' and 'embedding' in d
+        ]
+        if not person_nodes:
+            return []
+        corpus_embeddings = [self.behavior_graph.nodes[n]['embedding'] for n in person_nodes]
+        query_embedding = self._get_embeddings([query_text])[0]
+        hits = self._semantic_search(query_embedding, corpus_embeddings, top_k=k)
+        return [(person_nodes[h['corpus_id']], h['score']) for h in hits]
+
     def _dfs_search(self,source,depth):
         node_list = []
         layers = nx.bfs_layers(self.behavior_graph,sources=source)
