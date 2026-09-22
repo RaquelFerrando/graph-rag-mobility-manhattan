@@ -98,11 +98,21 @@ class MobilityAgent:
             return f"{hours:02d}:{minutes:02d}"
         if use_reference:
             _,weights =self.behavior_graph.preference_modelling(profile=self.profile,desire=desire,time=time)
-            reference_prompt = f"""Context: This is the reference choices of people who have similar profiles in {self.reference_city} in a normal workday. Higher wights means more likely to be chosen by people with similar profile.
-            Available Mode Choices : {[d['primary_mode'] for d in weights]}
-            Available Duration Choices : {[d['duration_minutes'] for d in weights]}
+            # Paper sec 3.4 treats the graph's computed probabilities as a
+            # prior distribution that the LLM should refine/calibrate. The
+            # original prompt only listed the mode/duration options without
+            # their computed weight, so the LLM had no prior to calibrate -
+            # it just invented a fresh distribution. Passing prior_weight
+            # explicitly makes the prompt match that description.
+            prior_choices = [
+                {'primary_mode': d['primary_mode'], 'duration_minutes': d['duration_minutes'], 'prior_weight': round(d['weight'], 3)}
+                for d in weights
+            ]
+            reference_prompt = f"""Context: This is the reference behavior of people with similar profiles in {self.reference_city} in a normal workday, computed from a graph-based prior model. Higher prior_weight means more likely to be chosen by people with similar profile.
+            Reference choices with their prior probability (treat these as a starting point, not a fixed answer):
+            {prior_choices}
             """
-            reference_note = f"- You should consider your profile, the choices, the possible cultural difference between {self.reference_city} and {self.city}, and the weather(if provided)"
+            reference_note = f"- Start from the prior_weight values above, then adjust them based on your profile, the possible cultural difference between {self.reference_city} and {self.city}, and the weather (if provided). Briefly note in your reasoning if and why you deviated from the prior."
         else:
             reference_prompt = """"
             Available Mode Choices : ['walking', 'biking', 'auto_passenger','public_transit','private_auto', 'on_demand_auto','other_travel_mode']
