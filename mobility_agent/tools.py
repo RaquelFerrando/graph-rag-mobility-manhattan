@@ -41,7 +41,11 @@ class POISearchTool:
         """
         Initialize the POI search tool with a GeoDataFrame containing POI data.
         """
-        poi_df = gpd.read_file(POI_FILE)
+        # encoding='utf-8': GDAL's CSV driver defaults to the system codepage (cp1252 on
+        # Windows) unless told otherwise, and crashes outright on POI names with characters
+        # outside it (seen with Manhattan business names) - a UTF-8 BOM alone isn't enough,
+        # pyogrio needs it passed explicitly.
+        poi_df = gpd.read_file(POI_FILE, encoding='utf-8')
         if not isinstance(poi_df, gpd.GeoDataFrame):
             geometry = [Point(xy) for xy in zip(poi_df.LONGITUDE, poi_df.LATITUDE)]
             poi_df = gpd.GeoDataFrame(poi_df, geometry=geometry, crs="EPSG:4326")
@@ -165,7 +169,7 @@ class ProfileGeneratorTool:
     
     def __init__(self):
         self.client = OpenAI(base_url=BASE_URL,api_key=API_KEY)
-        self.cbd_df = gpd.read_file(CENCUS_FILE)
+        self.cbd_df = gpd.read_file(CENCUS_FILE, encoding='utf-8')  # see POISearchTool.__init__
         if DEMOGRAPGIC_FILE and os.path.exists(DEMOGRAPGIC_FILE):
             with open(DEMOGRAPGIC_FILE,'r') as f:
                 self.demographic_data = json.load(f)
