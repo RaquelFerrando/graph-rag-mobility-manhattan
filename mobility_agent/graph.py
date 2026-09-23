@@ -8,7 +8,6 @@ import os
 import pickle
 from faker import Faker
 from openai import OpenAI
-from sentence_transformers import util
 import matplotlib.pyplot as plt
 from dotenv import load_dotenv
 
@@ -244,7 +243,7 @@ class BehaviorGraph:
             desire_weights = {}
             for d in desire_nodes:
                 d_embed = self._get_embeddings(d)
-                d_w = util.cos_sim(d_embed,desire_embedding).item()
+                d_w = float(self._cosine_similarity(d_embed, desire_embedding)[0, 0])
                 desire_weights[d] = d_w
 
         # create subgraph
