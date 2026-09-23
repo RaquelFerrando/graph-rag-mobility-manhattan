@@ -169,6 +169,11 @@ class ProfileGeneratorTool:
         if DEMOGRAPGIC_FILE and os.path.exists(DEMOGRAPGIC_FILE):
             with open(DEMOGRAPGIC_FILE,'r') as f:
                 self.demographic_data = json.load(f)
+        # Tracks profiles returned without the LLM consistency-correction step (the system
+        # prompt below: "Fix any unrealistic combinations e.g. a 19-year-old with a PhD"), so a
+        # batch run can report how many sampled profiles never actually got checked, instead of
+        # that information being lost in a single console print per failure.
+        self.uncorrected_profile_count = 0
         self.definition = {
             "type": "function",
             "function": {
@@ -282,25 +287,38 @@ class ProfileGeneratorTool:
         - available_vehicles
         """
 
-        try:
-            # Call the LLM to refine the profile
-            response = self.client.beta.chat.completions.parse(
-                model=MODEL,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                response_format=AgentProfile,
-                temperature=0.7,  # Add some variety
-            )
-            return response.choices[0].message.content
-        except Exception as e:
-            print(f"Error in profile generation: {e}")
-            # If LLM call fails, ensure age is a number not a tuple and return the sampled profile
-            if isinstance(sampled_profile["age"], tuple):
-                sampled_profile["age"] = random.randint(sampled_profile["age"][0], sampled_profile["age"][1])
-            profile = AgentProfile(**sampled_profile)
-            return profile.model_dump_json()
+        # Retry once: most failures here are transient (a local Ollama server briefly busy),
+        # not a reason to permanently skip the consistency-correction step described in the paper.
+        max_attempts = 2
+        last_error = None
+        for attempt in range(1, max_attempts + 1):
+            try:
+                response = self.client.beta.chat.completions.parse(
+                    model=MODEL,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    response_format=AgentProfile,
+                    temperature=0.7,  # Add some variety
+                )
+                return response.choices[0].message.content
+            except Exception as e:
+                last_error = e
+                print(f"Error in profile generation (attempt {attempt}/{max_attempts}): {e}")
+
+        # Both attempts failed: fall back to the uncorrected sampled profile, but count it so a
+        # batch run can report how many profiles never got the LLM's consistency check, instead
+        # of that fact only existing as a print statement in the console scrollback.
+        self.uncorrected_profile_count += 1
+        print(
+            f"Falling back to uncorrected sampled profile after {max_attempts} failed attempts "
+            f"(last error: {last_error}). Total uncorrected so far: {self.uncorrected_profile_count}"
+        )
+        if isinstance(sampled_profile["age"], tuple):
+            sampled_profile["age"] = random.randint(sampled_profile["age"][0], sampled_profile["age"][1])
+        profile = AgentProfile(**sampled_profile)
+        return profile.model_dump_json()
         
     def get_home(self, bgrp_id=None):
         """
