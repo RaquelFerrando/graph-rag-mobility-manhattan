@@ -319,8 +319,18 @@ class ProfileGeneratorTool:
             f"Falling back to uncorrected sampled profile after {max_attempts} failed attempts "
             f"(last error: {last_error}). Total uncorrected so far: {self.uncorrected_profile_count}"
         )
-        if isinstance(sampled_profile["age"], tuple):
+        # AgentProfile requires age/available_vehicles as int, but the raw sampled values are
+        # a [lo, hi] range (a list, never a tuple once it's round-tripped through JSON - the
+        # original `isinstance(..., tuple)` check here never matched anything) and a category
+        # string like "one"/"three_plus" respectively. When the LLM correction succeeds it
+        # does this conversion implicitly (told to return a valid AgentProfile); this fallback
+        # path skipped it entirely and crashed on pydantic validation instead of degrading
+        # gracefully - the exact case the retry/counter above exists to handle.
+        if isinstance(sampled_profile["age"], (tuple, list)):
             sampled_profile["age"] = random.randint(sampled_profile["age"][0], sampled_profile["age"][1])
+        vehicles_to_int = {"zero": 0, "one": 1, "two": 2, "three_plus": 3, "unknown_num_vehicles": 0}
+        if isinstance(sampled_profile["available_vehicles"], str):
+            sampled_profile["available_vehicles"] = vehicles_to_int.get(sampled_profile["available_vehicles"], 0)
         profile = AgentProfile(**sampled_profile)
         return profile.model_dump_json()
         
