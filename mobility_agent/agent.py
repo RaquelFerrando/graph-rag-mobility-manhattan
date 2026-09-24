@@ -7,6 +7,7 @@ from typing import List, Dict, Union, Optional
 from geopy.distance import geodesic
 import random
 import datetime
+import dateutil.parser
 
 from .graph import BehaviorGraph
 from .tools import POISearchTool, ProfileGeneratorTool
@@ -411,7 +412,14 @@ class MobilityAgent:
         
     def get_time_schedule(self,use_reference=True):
         def strtime2number(strtime):
-            time = datetime.datetime.strptime(strtime, "%H:%M").time()
+            # ScheduleItem.start_time is just a `str` field (the LLM is only told the format
+            # in the prompt, nothing enforces it) - a strict "%H:%M" strptime silently dropped
+            # an entire activity (via the try/except below) whenever a smaller local model
+            # added seconds ("17:43:00") or another minor variation. dateutil handles those.
+            try:
+                time = datetime.datetime.strptime(strtime, "%H:%M").time()
+            except ValueError:
+                time = dateutil.parser.parse(strtime).time()
             return time.hour+time.minute/60
         
         # Try to load existing schedule

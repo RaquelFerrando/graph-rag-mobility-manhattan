@@ -107,7 +107,9 @@ class POISearchTool:
         if isinstance(naics_code, str):
             # Check if it's a comma-separated list
             if ',' in naics_code:
-                naics_list = [int(code.strip()) for code in naics_code.split(',')]
+                # filter empty pieces: a trailing/double comma from the LLM's tool call
+                # (e.g. "722511,") otherwise crashes int('') and drops the whole activity
+                naics_list = [int(code.strip()) for code in naics_code.split(',') if code.strip()]
             else:
                 naics_list = [int(naics_code.strip())]
         elif isinstance(naics_code, list):
