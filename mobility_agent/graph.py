@@ -238,12 +238,17 @@ class BehaviorGraph:
         new_graph = self.behavior_graph.subgraph(node_list)
 
         if desire:
-            desire_embedding = self._get_embeddings(desire)
             desire_nodes = [d['props']['trip_purpose'] for n,d in new_graph.nodes(data=True) if d['type']=='desire']
+            # Batch every embedding this step needs into one call instead of one HTTP
+            # round-trip per desire node (up to k=20+ sequential calls before this fix) -
+            # each extra round-trip to the local Ollama server is a chance to stall, and
+            # this dominated latency far more than the final LLM completion did.
+            unique_desires = list(dict.fromkeys(desire_nodes))
+            all_embeddings = self._get_embeddings([desire] + unique_desires)
+            desire_embedding = [all_embeddings[0]]
             desire_weights = {}
-            for d in desire_nodes:
-                d_embed = self._get_embeddings(d)
-                d_w = float(self._cosine_similarity(d_embed, desire_embedding)[0, 0])
+            for d, d_embed in zip(unique_desires, all_embeddings[1:]):
+                d_w = float(self._cosine_similarity([d_embed], desire_embedding)[0, 0])
                 desire_weights[d] = d_w
 
         # create subgraph
