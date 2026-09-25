@@ -152,11 +152,17 @@ class MobilityAgent:
 
         time = number2strtime(time)
 
-        if not distance : 
+        # The prompt gave the LLM a bare number with no unit (e.g. "0.9") - it
+        # can't reason about whether that's short or long without knowing miles
+        # vs km vs meters. Callers pass distance already formatted with its own
+        # unit (get_location_choice uses geodesic() km; the Manhattan eval
+        # script uses Replica's trip_distance_miles) - this just keeps the
+        # 'unknown' fallback for when no distance is available at all.
+        if not distance:
             distance = 'unknown'
 
 
-        choice_template = f""" You are {self.profile}, tasked with simulating realistic transportation behavior based on reference data from people with similar profiles. 
+        choice_template = f""" You are {self.profile}, tasked with simulating realistic transportation behavior based on reference data from people with similar profiles.
 
         Current Time: {time}
         Current Desire: {desire}
@@ -168,15 +174,15 @@ class MobilityAgent:
 
         Note: 
         - Output your reason and preference weight of different choices
-        - The sum of all weights should equals to 1.
+        - The sum of all weights should equal 1.
         {reference_note}
 
         Answer Format:
         {{
         'think': [list your reason in short sentences (up to 4 points)]
         'choice_weights':[
-        {{'primary_mode': mode1, 'duration_minutes': duration1, weight: weight1 }},
-        {{'primary_mode': mode2, 'duration_minutes': duration2, weight: weight2 }},
+        {{'primary_mode': mode1, 'duration_minutes': duration1, 'weight': weight1 }},
+        {{'primary_mode': mode2, 'duration_minutes': duration2, 'weight': weight2 }},
         ...
         ]
         }}
@@ -211,7 +217,7 @@ class MobilityAgent:
             distance_km = geodesic(current_coords, destination_coords).kilometers
             
             # Get mode preferences still to determine travel mode
-            mode_preference = self.get_mode_prefernce(desire=desire, time=time, distance=distance_km,use_reference=use_reference)
+            mode_preference = self.get_mode_prefernce(desire=desire, time=time, distance=f"{distance_km:.2f} km",use_reference=use_reference)
             choice_weights = mode_preference['choice_weights']
 
             # Select the mode with the highest weight

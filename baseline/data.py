@@ -90,7 +90,7 @@ def load_data(trip_file):
     trip_df['age_group'] = trip_df['age'].apply(categorize_age)
     trip_df['income_group'] = trip_df['household_income'].apply(categorize_income)
 
-    trip_df = trip_df[['person_id','age','gender','employment_status','household_size','household_income','available_vehicles','industry','education','trip_purpose','start_time','primary_mode','duration_minutes','age_group','income_group']]
+    trip_df = trip_df[['person_id','age','gender','employment_status','household_size','household_income','available_vehicles','industry','education','trip_purpose','start_time','primary_mode','duration_minutes','age_group','income_group','trip_distance_miles']]
     
     return trip_df
 
