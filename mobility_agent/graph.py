@@ -11,6 +11,10 @@ from openai import OpenAI
 import matplotlib.pyplot as plt
 from dotenv import load_dotenv
 
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from baseline.data import categorize_age, categorize_income
+
 # Load environment variables from .env file
 load_dotenv()
 
@@ -99,6 +103,16 @@ class BehaviorGraph:
         trip_df = trip_df[['activity_id','person_id','household_id','age','gender','previous_status','employment_status','household_size','household_income','available_vehicles','industry','education','trip_purpose','start_time','primary_mode','duration_minutes','target_landuse','work_bgrp','home_bgrp']]
 
         trip_df = trip_df.sample(n=sample_num, random_state=random_state)
+        # The query profile embedded in _similarity_search uses bucketed
+        # age_group/income_group (baseline/data.py's schema), but this person
+        # profile used raw age/household_income - an embedding model can't
+        # meaningfully compare a bucket string like "25-34" against a bare
+        # number like "61", so those two fields contributed near-noise to the
+        # similarity score (confirmed: a 61-year-old with $173k income was the
+        # top "match" for a 25-34/$50-100k query). Bucketing both sides the
+        # same way makes the comparison apples-to-apples.
+        trip_df['age_group'] = trip_df['age'].apply(categorize_age)
+        trip_df['income_group'] = trip_df['household_income'].apply(categorize_income)
         # get fake_name
         trip_df['name'] = trip_df['gender'].apply(lambda x: get_fakename(x))
         # get relatives
@@ -111,7 +125,7 @@ class BehaviorGraph:
         attribute_dict = {
             'desire' : ['trip_purpose','start_time'],
             'intention': ['primary_mode','duration_minutes'],
-            'person':['name','age','gender','previous_status','employment_status','household_size','household_income','available_vehicles','education','work_bgrp','home_bgrp']
+            'person':['name','age_group','gender','previous_status','employment_status','household_size','income_group','available_vehicles','education','work_bgrp','home_bgrp']
         }
         behavior_graph = nx.Graph()
         for idx,row in trip_df.iterrows():
