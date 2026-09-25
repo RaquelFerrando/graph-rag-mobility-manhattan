@@ -105,15 +105,44 @@ class MobilityAgent:
             # their computed weight, so the LLM had no prior to calibrate -
             # it just invented a fresh distribution. Passing prior_weight
             # explicitly makes the prompt match that description.
-            prior_choices = [
-                {'primary_mode': d['primary_mode'], 'duration_minutes': d['duration_minutes'], 'prior_weight': round(d['weight'], 3)}
-                for d in weights
-            ]
-            reference_prompt = f"""Context: This is the reference behavior of people with similar profiles in {self.reference_city} in a normal workday, computed from a graph-based prior model. Higher prior_weight means more likely to be chosen by people with similar profile.
+            # float(...) before round(): d['weight'] is numpy.float64, and
+            # round() on it stays numpy.float64, whose repr leaks into the
+            # prompt as literal text "np.float64(0.167)" instead of "0.167" -
+            # confirmed by actually printing a real rendered prompt.
+            prior_choices = sorted(
+                [
+                    {'primary_mode': d['primary_mode'], 'duration_minutes': d['duration_minutes'], 'prior_weight': round(float(d['weight']), 3)}
+                    for d in weights
+                ],
+                key=lambda c: c['prior_weight'], reverse=True,
+            )
+            # The graph only ever surfaces combos reachable from a necessarily
+            # small reference sample (see README finding on sample_num=50/k=20) -
+            # a combo missing from prior_choices means no similar-enough
+            # reference person happened to take it, NOT that it's implausible.
+            # Previously this branch showed ONLY prior_choices, so an option the
+            # graph never retrieved (e.g. biking, when the 50-person sample has
+            # only 1 biker) was structurally invisible to the LLM for that query,
+            # not just under-weighted - collapsing it to ~0% in the simulated
+            # population. Always listing the full option universe first (same
+            # as the no-reference branch) keeps every option choosable even when
+            # the graph has no prior for it this time.
+            reference_prompt = f"""Available Mode Choices : ['walking', 'biking', 'auto_passenger','public_transit','private_auto', 'on_demand_auto','other_travel_mode']
+            Available Duration Choices :[ '0-10','10-20','20-30', '30-40', '40-50', '50-60']
+
+            Context: This is the reference behavior of people with similar profiles in {self.reference_city} in a normal workday, computed from a graph-based prior model. Higher prior_weight means more likely to be chosen by people with similar profile. A combination not listed below simply has no data from similar reference people in this case - it is not excluded.
             Reference choices with their prior probability (treat these as a starting point, not a fixed answer):
             {prior_choices}
             """
-            reference_note = f"- Start from the prior_weight values above, then adjust them based on your profile, the possible cultural difference between {self.reference_city} and {self.city}, and the weather (if provided). Briefly note in your reasoning if and why you deviated from the prior."
+            # "cultural difference between Manhattan and Manhattan" is nonsense
+            # when reference_city == city (true for this experiment, since we
+            # never got San Francisco reference data working) - only mention it
+            # when the two actually differ.
+            cultural_note = (
+                f" the possible cultural difference between {self.reference_city} and {self.city}, and"
+                if self.reference_city != self.city else ""
+            )
+            reference_note = f"- Start from the prior_weight values above, then adjust them based on your profile,{cultural_note} the weather (if provided). You may also pick an available option that has no prior_weight if it genuinely fits your profile better. Briefly note in your reasoning if and why you deviated from the prior."
         else:
             reference_prompt = """"
             Available Mode Choices : ['walking', 'biking', 'auto_passenger','public_transit','private_auto', 'on_demand_auto','other_travel_mode']
