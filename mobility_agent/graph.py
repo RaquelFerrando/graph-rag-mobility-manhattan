@@ -84,6 +84,15 @@ class BehaviorGraph:
             'trip_taker_home_bgrp_2020':'home_bgrp'
         })
 
+        # The paper's own schema (Table 1) only offers the LLM 6 duration buckets,
+        # 0-10 through 50-60 - it assumes no trip exceeds an hour. 11.8% of Manhattan's
+        # raw reference trips (588/5000) exceed that, up to 1435 minutes, and without
+        # this filter durationt2str buckets them anyway (e.g. "70-80", "1430-1440"),
+        # so prior_choices could surface duration options the LLM's own answer format
+        # doesn't support. Already applied to the eval set (build_manhattan_eval_max60.py);
+        # this mirrors that same schema constraint on the reference/graph side.
+        trip_df = trip_df[trip_df['duration_minutes'] <= 60]
+
         trip_df['duration_minutes'] = trip_df['duration_minutes'].apply(durationt2str)
         trip_df['start_time'] = trip_df['start_time'].apply(strtime2number)
 
