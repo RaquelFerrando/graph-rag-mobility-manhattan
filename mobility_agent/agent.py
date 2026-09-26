@@ -48,7 +48,12 @@ class MobilityAgent:
                  reference_city='Cambridge,MA',
                  reference_file = None,
                  save_dir="data/agents"):
-        self.client = OpenAI(base_url=BASE_URL,api_key=API_KEY)
+        # No timeout meant a stalled remote call could hang the whole run
+        # forever with no error and no CPU activity - happened for real during
+        # the Manhattan GPU run (row 129 sat frozen for minutes). 120s is well
+        # above the observed 5-10s/call, but still bounds the worst case so a
+        # stuck call raises instead of blocking indefinitely.
+        self.client = OpenAI(base_url=BASE_URL,api_key=API_KEY,timeout=120)
         self.profile = profile
         self.city = city
         self.tools={
@@ -262,11 +267,18 @@ class MobilityAgent:
         NAICS codes for common destinations:
         - Shopping: 445110 (grocery stores), 448140 (clothing stores), 443142 (electronics stores), 452210 (department stores)
         - Food/Restaurants: 722511 (full-service restaurants), 722513 (fast food), 722515 (coffee/snack bars), 722410 (bars/drinking places)
-        - Education/School: 611110 (K-12 schools), 611310 (colleges/universities), 611610 (fine arts schools)
-        - Recreation/Entertainment: 713940 (gyms/fitness centers), 712130 (zoos/gardens), 512131 (movie theaters), 713950 (bowling centers)
-        - Social/Community: 813410 (civic/social orgs), 624110 (youth services), 624120 (elderly/disability services), 813910 (business associations), 531110 (apartment rentals), 531311 (property managers), 236118 (residential remodelers), 621610 (home health care)
-        - Maintenance/Repair: 811111 (auto repair), 811192 (car washes), 561730 (landscaping), 811411 (home equipment repair)
-        - Other/Public Services: 813110 (religious organizations), 921110 (government offices), 922120 (police), 922160 (fire dept),541110 (law offices), 621111 (physician offices), 541512 (computer systems design), 541611 (management consulting)
+        - Education/School: 611310 (schools/colleges/universities - use this for ANY student
+          including minors; this Manhattan POI catalog has no dedicated K-12 (611110) entries,
+          confirmed empirically (0 rows) - 611310 is the closest available real destination type)
+        - Recreation/Entertainment: 713940 (gyms/fitness centers), 512131 (movie theaters), 713950 (bowling centers)
+        - Social/Community: 813910 (business associations), 531110 (apartment rentals)
+        - Maintenance/Repair: 811111 (auto repair), 811192 (car washes)
+
+        Only use NAICS codes from this list - codes not listed here (e.g. zoos/gardens,
+        religious organizations, government offices, police/fire, physician offices, youth or
+        elderly services, property managers, consulting) were checked and have ZERO matching
+        POIs in this dataset (data-source gap, not a search radius problem), so searching for
+        them always returns no results and silently drops that stop from the agent's day.
         """
         
         user_prompt = f"""I am {self.profile} at {time}:00, wanting to {desire}. 
@@ -319,7 +331,13 @@ class MobilityAgent:
             # print(f"Found {pois_found} matching POIs nearby.")
             
             if pois_found == 0:
-                # print("No suitable destinations found.")
+                # Should now be rare - the system prompt above only lists NAICS codes
+                # confirmed to have real POIs (see mobility_agent_ny findings), but a
+                # geographically sparse area could still legitimately return 0 within
+                # the search radius. Printed (not silently dropped) so a batch run's
+                # console log shows how many stops actually got lost this way.
+                print(f"No POIs found for naics_code={function_args.get('naics_code')} "
+                      f"within {function_args.get('max_distance_km')}km - dropping this stop.")
                 return None
             
             # Prepare POI descriptions for the LLM
