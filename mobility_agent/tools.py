@@ -7,7 +7,7 @@ from faker import Faker
 from shapely.geometry import Point
 from geopy.distance import geodesic
 from pydantic import BaseModel, Field
-from typing import Tuple, List, Dict, Any, Union, Optional
+from typing import Tuple, List, Dict, Any, Union, Optional, Literal
 from openai import OpenAI
 from dotenv import load_dotenv
 
@@ -28,10 +28,21 @@ class AgentProfile(BaseModel):
     city: str
     age: int
     gender: str
-    employment_status: str
-    education: str
+    # Left as plain `str` before, the LLM consistency-correction step (see
+    # generate_profile below) freely invented categories outside the sampled
+    # vocabulary - confirmed empirically: "retired"/"homemaker"/"student" for
+    # employment_status (only employed/not_in_labor_force/unemployed/under_16
+    # are real categories), "bachelor"/"college"/"bachelors" for education
+    # (4 different spellings for one category), and income buckets drifting
+    # even from its own sampled boundaries ("30k-50k", "40k-60k" - neither is
+    # a real bucket). Downstream code (the graph, baseline/data.py's real-data
+    # comparison) depends on these exact category strings, so a Literal here
+    # forces the structured-output schema to only allow the real ones -
+    # exactly like TransportationChoice already does for mode/duration.
+    employment_status: Literal["employed", "not_in_labor_force", "unemployed", "under_16"]
+    education: Literal["no_school", "k_12", "high_school", "some_college", "bachelors_degree", "advanced_degree"]
     household_size: int
-    household_income: str
+    household_income: Literal["Under 25k", "25k-50k", "50k-75k", "75k-100k", "100k-150k", "150k+"]
     available_vehicles: int
 
 class POISearchTool:
@@ -254,12 +265,33 @@ class ProfileGeneratorTool:
 
         gender = weighted_sample(genders, gender_weights)
 
+        # Resolve age to a specific integer BEFORE sampling employment_status, so the
+        # latter can be chosen CONDITIONALLY on age instead of independently. Sampling
+        # both independently and asking the LLM correction step to reconcile them
+        # wasn't reliable: confirmed empirically that it tended to "age up" a sampled
+        # minor to an adult age instead, and even the rare profile that kept a child's
+        # age often got an adult-only employment_status anyway. Note "under_16" means
+        # literally under 16, not under 18 (age_ranges' (0,17) bucket, added to close
+        # the age/employment gap - see build_manhattan_demographics.py - includes
+        # 16-17-year-olds too, who don't fit "under_16" by the category's own name).
+        age_range = weighted_sample(age_ranges, age_weights)
+        age = random.randint(age_range[0], age_range[1])
+        if age < 16:
+            employment_status = "under_16"
+        elif age < 18:
+            # Not "under_16" by definition, but not a full adult profile either.
+            employment_status = weighted_sample(["not_in_labor_force", "employed"], [0.7, 0.3])
+        else:
+            adult_statuses = [s for s in employment_statuses if s != "under_16"]
+            adult_weights = [w for s, w in zip(employment_statuses, employment_weights) if s != "under_16"]
+            employment_status = weighted_sample(adult_statuses, adult_weights)
+
         sampled_profile = {
             "name": get_fakename(gender),
             "city": city,
-            "age": weighted_sample(age_ranges, age_weights),
+            "age": age,
             "gender": gender,
-            "employment_status": weighted_sample(employment_statuses, employment_weights),
+            "employment_status": employment_status,
             "education": weighted_sample(education_levels, education_weights),
             "household_income": weighted_sample(income_ranges, income_weights),
             "available_vehicles": weighted_sample(vehicles, vehicle_weights),
@@ -273,9 +305,26 @@ class ProfileGeneratorTool:
             return AgentProfile(**sampled_profile)
             
         # Create prompt for LLM to refine the profile
+        # age_ranges now includes an (0,17) bucket (see build_manhattan_demographics.py) -
+        # confirmed empirically that without an EXPLICIT rule tying it to employment_status,
+        # the model doesn't reliably infer the connection on its own: sampled ages under 18
+        # got "corrected" upward to an adult age in 99/100 test profiles, and even the one
+        # that kept a child age got employment_status='not_in_labor_force' instead of
+        # 'under_16' - "fix unrealistic combinations" alone wasn't a strong enough signal.
+        # age/employment_status are now sampled CONDITIONALLY (see above), so they're
+        # already guaranteed consistent - but the prompt below asks for a full
+        # "corrected, coherent profile" as one JSON object, not a patch to specific
+        # fields, so the model still regenerates age/employment_status from scratch
+        # each time and can drift away from the already-correct sampled values while
+        # fixing something else (e.g. education). Telling it explicitly to leave these
+        # two untouched cuts that down (confirmed: 9/100 -> 3/100 mismatches without
+        # this instruction).
         system_prompt = """You are a demographic profile generator for an urban mobility simulation.
         Given basic sampled demographic data, correct it if needed and return a realistic profile with a name.
         Fix any unrealistic combinations (e.g., a 19-year-old with a PhD).
+        IMPORTANT: age and employment_status were already sampled to be consistent with each
+        other. Copy them through UNCHANGED - do not alter either value for any reason, even
+        while fixing other fields like education.
         Return ONLY a valid JSON object, no extra explanation."""
         
         user_prompt = f"""Given this sampled data for a resident of {city}, generate a corrected, coherent profile:
