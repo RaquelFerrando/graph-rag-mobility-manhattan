@@ -312,7 +312,11 @@ class BehaviorGraph:
             elif edge_type == 'choose_to':
                 node_props = new_graph.nodes[desire_node]['props']
                 start_time = node_props['start_time']
-                weight = abs(time-start_time)/24
+                # Inherited from the original paper's graph.py as `abs(time-start_time)/24`
+                # (a raw time DISTANCE), which after the max-normalization below gives the
+                # LEAST similar time the highest weight - the opposite of "time closeness".
+                # Inverted here so the closest time-of-day match dominates, as intended.
+                weight = 1 - abs(time-start_time)/24
             elif edge_type == 'relative_of':
                 weight = 1
             
