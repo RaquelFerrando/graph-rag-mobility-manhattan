@@ -1,38 +1,63 @@
 # Simulating Manhattan
 
 This project validates an LLM-based synthetic mobility population, built with a Graph RAG /
-"Preference Chain" architecture, against real mobility data for Manhattan, NY, a much larger
-and denser city than the original paper validates on.
+"Preference Chain" architecture, against real mobility data for Manhattan, NY.
 
 **Approach**: the code release for *"Graph RAG as Human Choice Model: Building a
 Data-Driven Mobility Agent with Preference Chain"* (Kai Hu et al. 2025, arXiv:2508.16172)
 only validates on Cambridge, MA and San Francisco, CA. This project fixed [8 blocking
-bugs](#bug-fixes) that prevented it from running at all, built a full data pipeline sourcing
-real Replica, OpenStreetMap, Census ACS, and Advan data for Manhattan, and ran both of the
-paper's own validation experiments at full scale (1000 rows / 1000 agents) against real
-Manhattan trip data.
+bugs](#bug-fixes), built a full data pipeline sourcing real Replica, OpenStreetMap, Census
+ACS, and Advan data for Manhattan, and ran both of the paper's own validation experiments at
+full scale (1000 rows / 1000 agents) against real Manhattan trip data.
 
 **Results**: both experiments beat a trivial "always predict the majority class" baseline by
 orders of magnitude. Mode-share KL divergence came out at **0.062** for Experiment I
 (single-trip prediction) and **0.039** for Experiment II (full-day synthetic population),
-against a trivial baseline of 12-15. Full numbers are in [Current status](#current-status).
+against a trivial baseline of 12-15. Full numbers are in [Results](#results).
 
-**Reusing this for another city**: the data pipeline below is a documented recipe rather
-than a one-off for Manhattan. Swap each raw source (Replica study area, OpenStreetMap place
-name, local census geography) for a new city's equivalent, and the scripts' output schemas
-stay the same.
+**Reusing this for another city**: each script in the data pipeline below documents exactly
+which raw-source columns it expects, so pointing it at a new city's equivalent export
+(Replica study area, OpenStreetMap place name, local census geography) is mechanical. Several
+constants and parameters, though, were set by looking at Manhattan's own data (file paths,
+the city name, `sample_num=200`, the 60-minute duration cutoff) and would need checking
+against a new city's data, not assumed to carry over.
 
-**Contents**: [Data pipeline](#data-pipeline-manhattan) &middot;
+**Contents**: [Setup](#setup) &middot;
+[Data pipeline](#data-pipeline-manhattan) &middot;
+[Core code](#core-code-mobility_agent-baseline) &middot;
+[Example usage](#example-usage) &middot;
 [Scripts](#scripts) &middot; [Bug fixes](#bug-fixes) &middot;
 [Experiment configuration](#experiment-configuration) &middot;
 [Methodological findings](#methodological-findings-not-fixed-documented) &middot;
-[Current status](#current-status) &middot;
-[Original setup instructions (upstream)](#original-setup-instructions-upstream)
+[Results](#results)
 
 ---
 
 This is a fork of [kekehurry/mobility_agent](https://github.com/kekehurry/mobility_agent),
-the original paper's own code release, with its git history preserved.
+the original paper's own code release. It starts from that repository's final state,
+attributed to the original author.
+
+## Setup
+
+### Create and activate a virtual environment
+```
+uv venv
+source .venv/bin/activate
+```
+
+### Install dependencies from pyproject.toml
+```
+uv sync
+```
+
+### Create the Qwen3-nothink model
+
+The experiments use `qwen3:8b` with thinking mode off by default. The `Modelfile` in this
+directory builds that variant:
+
+```
+ollama create qwen3-nothink:8b -f Modelfile
+```
 
 ## Data pipeline (Manhattan)
 
@@ -42,16 +67,18 @@ realistic profiles), a street network (to route simulated trips), points of inte
 places an agent can choose to visit), and, where available, real traffic counts (to validate
 simulated flows against). Most of these come from [Replica](https://replicahq.com), a
 platform that publishes modeled trip, demographic, and traffic data for US metro areas; the
-rest come from OpenStreetMap, local census open-data portals, and Advan.
+rest come from OpenStreetMap, local census open-data portals, and Advan. Replica and Advan
+both require an account (Advan's is a paid data subscription); OpenStreetMap (via `osmnx`)
+and the census portals are free and need no account.
 
 The files below are not committed to this repository. Each is either a raw export from one
-of those sources or a deterministic rebuild produced by the corresponding script. This also
-means the same recipe transfers to a different city. Swap each raw source for that city's
-equivalent (Replica study area, OSM place name, local open-data portal, Census geography),
-and the scripts' output schemas stay the same. Each script's own constants name exactly
-which columns it reads from its raw source, for example `build_manhattan_census.py` expects
-`GEOID`/`geometry` from the tract polygons; check the relevant script for a new city's exact
-field requirements.
+of those sources or a deterministic rebuild produced by the corresponding script. Each
+script's own constants name exactly which columns it reads from its raw source, for example
+`build_manhattan_census.py` expects `GEOID`/`geometry` from the tract polygons; check the
+relevant script for a new city's exact field requirements, and the "Reusing this for another
+city" note above for what else would need checking. `results/manhattan/`, by contrast, **is**
+committed: it's small, and regenerating it means re-running the experiments, not
+re-downloading a raw export.
 
 All paths relative to `data/`, built by the scripts in `scripts/`:
 
@@ -68,6 +95,82 @@ All paths relative to `data/`, built by the scripts in `scripts/`:
 
 `CENSUS_API_KEY` (free, https://api.census.gov/data/key_signup.html) is required only by
 `build_manhattan_census.py` and should be set as an environment variable.
+
+## Core code (`mobility_agent/`, `baseline/`)
+
+`mobility_agent/` and `baseline/` are the original paper's code, which the [Scripts](#scripts)
+below call into to run the experiments. Unchanged except for the [bug fixes](#bug-fixes)
+below.
+
+- `mobility_agent/graph.py` (`BehaviorGraph`): builds the reference graph from real trip
+  rows, and retrieves/weights similar people for a given query (profile, desire, time).
+- `mobility_agent/agent.py` (`MobilityAgent`): generates a synthetic profile, a full-day
+  schedule, and mode/duration choices, calling the LLM with the graph's retrieved context as
+  a prior.
+- `mobility_agent/tools.py`: POI search (`POISearchTool`) and profile generation
+  (`ProfileGeneratorTool`), both called by `MobilityAgent`.
+- `baseline/data.py`: loads and cleans a Replica trips CSV into the columns the rest of the
+  code expects (age/income bucketing, time parsing).
+- `baseline/eval.py`: the paper's own KL-divergence and top-k accuracy metrics, reused as-is
+  by the `eval_manhattan_exp*` scripts below.
+
+## Example usage
+
+Minimal calls into the core code above, adapted from the original repo's own examples to use
+Manhattan (`BehaviorGraph()` already defaults to Manhattan's reference set via `REF_FILE` in
+`.env`; `MobilityAgent` needs `city`/`reference_city` set explicitly, since its own defaults
+are the paper's Cambridge, MA).
+
+### Mode preference modelling
+
+```python
+from mobility_agent.graph import BehaviorGraph
+graph = BehaviorGraph()  # reads REF_FILE from .env (data/reference/replica-manhattan_trips.csv)
+
+profile = "a young woman"
+desire = "eat"
+time = 8
+subgraph, weights = graph.preference_modelling(profile=profile, desire=desire, time=time, k=10, depth=4)
+graph.visualize_graph(subgraph, node_size=600, font_size=16, title_size=16)
+print("Transportation Mode Preference:", weights)
+```
+
+### Agent-based modelling
+
+#### Generate profile
+
+The agent generates a realistic profile from real demographic data, then chooses a random
+home location weighted by census tract population.
+
+```python
+from mobility_agent.agent import MobilityAgent
+
+agent = MobilityAgent(
+    city="Manhattan, New York",
+    reference_city="Manhattan, New York",
+    reference_file="data/reference/replica-manhattan_trips.csv",
+)
+print("Profile:", agent.profile)
+print("Home:", agent.memory_locations)
+```
+
+#### Create time schedule
+
+The agent builds a full-day activity plan, then for each activity searches for nearby points
+of interest matching its profile and preferred mode of transportation, selects the most
+suitable one, and saves important locations (home, work, school) to `agent.memory_locations`.
+
+```python
+agent.get_time_schedule()
+print("Time Schedule:", agent.time_schedule)
+```
+
+#### Memories
+
+```python
+print(agent.working_memory)
+print(agent.memory_locations)
+```
 
 ## Scripts
 
@@ -102,13 +205,15 @@ does. All paths are relative to the repository root.
 | Script | Input | Output |
 |---|---|---|
 | `plot_graph_example.py` | reference set | `graph_example.png`, a rendered example retrieval subgraph |
-| `plot_manhattan_distributions.py` | eval set, `exp1_test_1000.json` | `exp1_distribution_comparison.png` |
+| `plot_manhattan_distributions.py` | eval set, `exp1_test_1000.json` | `exp1_distribution_comparison.png` (mode + duration) |
+| `plot_manhattan_mode_distribution.py` | eval set, `exp1_test_1000.json` | `exp1_mode_distribution.png` (mode only, used in [Results](#results)) |
 | `plot_manhattan_exp2_distributions.py` | agent file, eval set, reference set, census | `exp2_mode_duration_comparison.png`, `exp2_trip_purpose_comparison.png`, `exp2_demographics_comparison.png`, `exp2_geography_decile.png`, `exp2_starttime_by_hour.png`, `exp2_schedule_coherence.json` |
 | `plot_manhattan_traffic_map.py` | roads-real, traffic edges | `exp2_traffic_map_vs_everyone.png` |
-| `plot_manhattan_traffic_map_residents.py` | roads-real, both traffic-edges files | `exp2_traffic_map_residents.png` |
+| `plot_manhattan_traffic_map_residents.py` | roads-real, both traffic-edges files | `exp2_traffic_map_residents.png` (dark background) |
+| `plot_manhattan_traffic_map_residents_light.py` | roads-real, both traffic-edges files | `exp2_traffic_map_residents_light.png` (light background, used in [Results](#results)) |
 | `export_trip_paths_for_animation.py` | roads-real, census, reference set, eval set, agent file | `anim_real_trips.json` / `anim_sim_trips.json`, trip paths for animation |
 
-### Diagnostics behind specific findings above
+### Diagnostics behind specific findings
 
 | Script | Input | What it established |
 |---|---|---|
@@ -124,7 +229,7 @@ does. All paths are relative to the repository root.
 
 ### Development utilities
 
-Kept for transparency even though they don't feed a specific number above.
+Kept for transparency even though they don't feed a specific reported number.
 
 | Script | Input | Output |
 |---|---|---|
@@ -133,10 +238,10 @@ Kept for transparency even though they don't feed a specific number above.
 
 ---
 
-Everything from here down documents what changed in the forked code and why, in three parts:
-**bug fixes** (restoring behavior the paper itself describes), **model setup** (ran locally,
-self-hosted, not a paid API), and **methodological findings** (properties of the method
-documented below).
+The next three sections go deeper on the fork: **bug fixes** (what was broken and how it was
+fixed), **experiment configuration** (which knobs were changed from the paper's defaults, and
+why), and **methodological findings** (real limitations of the method itself, left
+documented rather than fixed).
 
 ## Bug fixes
 
@@ -185,7 +290,7 @@ Each is its own commit with the full rationale; summarized here for reference.
    weight, and an exact time match a weight of 0, the opposite of what "time closeness" is
    meant to do. Inherited unchanged from the original paper's code. **Fixed in the code, but
    not re-run against the LLM**: this landed after the full-scale runs in
-   [Current status](#current-status), so those numbers reflect the inverted weight, not the
+   [Results](#results), so those numbers reflect the inverted weight, not the
    corrected one.
 
 ## Experiment configuration
@@ -199,6 +304,10 @@ the original repo.
 workaround is applied since it's a hybrid reasoning model and the paper's prompts assume no
 visible "thinking" step. Decoding settings (temperature, top-k/top-p sampling, stop tokens)
 are whatever `Modelfile` in this directory declares; nothing here was separately tuned.
+
+**The embedding model.** Also run locally via Ollama, using `mxbai-embed-large`, the paper's
+own default, unchanged. Embeds both the reference set's people and each querying agent's
+profile for the similarity search described below.
 
 **The reference graph.** For each query, the method retrieves real people similar to the
 querying agent, then uses their recorded choices as grounding context for the LLM. Three
@@ -229,12 +338,13 @@ full-population scale (not a smaller sample).
 These are real properties of the method/paper that testing on Manhattan surfaced. Fixing
 them would change the methodology being reproduced, which isn't this fork's goal.
 
-- **Replica's "Home Location" filter conditions on having taken a trip, and restricts the
-  export to residents only.** To restrict a Replica study area's People export to Manhattan,
-  you filter by Home Location. But per Replica's own documentation, once *any* filter is
-  active, the People table represents only "the traveling population," not full residents,
-  and the Studio UI gives no way around that traveler-conditioning. `demographics.json` is
-  therefore built from a population implicitly conditioned on having traveled that day. The
+- **Restricting to residents only, matching the paper, also implicitly restricts to people
+  who traveled that day.** This project filters Replica's People export by Home Location to
+  get Manhattan residents only, the same scope as the paper's Cambridge/SF data. But per
+  Replica's own documentation, once *any* filter is active on that export, the People table
+  represents only "the traveling population," not full residents, and the Studio UI gives no
+  way around that. `demographics.json` is therefore conditioned on having traveled that day,
+  not just on being a resident. The
   resident-only part is specific to this filter, not to Replica's data: a Trips export (for
   example "Trip Intersects", pulled wider than the study area) carries each trip-taker's own
   `trip_taker_home_trct_2020`/`trip_taker_work_trct_2020` fields on every row, independent of
@@ -276,7 +386,7 @@ them would change the methodology being reproduced, which isn't this fork's goal
   the schema's implicit assumption, rather than silently keeping the out-of-range rows in
   the reported numbers.
 
-## Current status
+## Results
 
 Both experiments completed, per the [experiment configuration](#experiment-configuration)
 above. The numbers below predate bug fix #8 (the inverted
@@ -284,109 +394,19 @@ above. The numbers below predate bug fix #8 (the inverted
 weighting, not the corrected one. Whether re-running with the fix would move these numbers,
 and by how much, hasn't been tested.
 
-- **Experiment I** (mode/duration prediction against real eval trips, matching
-  `exp1_step1_agent.ipynb`): see `scripts/run_experiment1_manhattan.py` /
-  `scripts/eval_manhattan_exp1.py`. 1000/1000 rows, aggregate KLD: mode-share **0.062**,
+- **Experiment I** (mode/duration prediction against real eval trips): see
+  `scripts/run_experiment1_manhattan.py` / `scripts/eval_manhattan_exp1.py`. 1000/1000 rows, aggregate KLD: mode-share **0.062**,
   duration **0.122**, against a trivial "always predict the majority class" baseline of
   12.77 / 15.14, orders of magnitude worse. The paper's own per-subgroup-averaged metric
   comes out at 0.39 (`results/manhattan/exp1_validation_summary.json`).
-- **Experiment II** (full synthetic population with day-long schedules, matching
-  `exp2_step1_abm.ipynb`): see `scripts/run_experiment2_manhattan.py`. 1000/1000 agents, 999
+
+  <img src="results/manhattan/exp1_mode_distribution.png" alt="Ground truth vs. simulated mode distribution, Experiment I" width="750">
+
+- **Experiment II** (full synthetic population with day-long schedules): see
+  `scripts/run_experiment2_manhattan.py`. 1000/1000 agents, 999
   with a valid schedule (8,278 trips total, 8.3 stops/agent on average), 98.6%
   chronologically well-ordered. Mode-share KLD **0.039** against real trips
   (`results/manhattan/exp2_modeshare_validation.json`). Traffic-flow and other
   per-experiment metrics are in the other `results/manhattan/exp2_*.json` files.
 
----
-
-# Original setup instructions (upstream)
-
-The sections below are from the original repo. Where this fork's setup differs (Manhattan
-data files, `qwen3-nothink` instead of `qwen3:8b`), see `.env.example` and `Modelfile` in
-this directory instead of the commands below, which are kept for reference/comparison.
-
-## Init Environment
-
-### Create and activate a virtual environment
-```
-uv venv
-source .venv/bin/activate
-```
-
-### Install dependencies from pyproject.toml
-```
-uv sync
-```
-
-## Download POI Data
-
-```
-gdown 1ZMA_tNP6EapE6UED8hyi5_6uoNzTSvt0 -O data/geo/safegraph-sf-poi.csv
-gdown 1JnOaM22HSrWC8SWVKm2x7kJHjl0oHoVt -O data/geo/safegraph-cambridge-poi.csv
-```
-
-## Create Qwen3-nothink Model
-
-The experiments are using `qwen3:8b`, and the thinking mode is off by default. Using the `Modelfile` to create this model
-
-```
-ollama create qwen3-nothink:8b -f Modelfile
-```
-
-# Example Usage
-
-## Mode Preference Modelling
-
-```python
-from mobility_agent.graph import BehaviorGraph
-graph = BehaviorGraph()
-
-profile = "a young women"
-desire = "eat"
-time = 8
-subgraph,weights = graph.preference_modelling(profile=profile,desire=desire,time=time,k=10,depth=4)
-graph.visualize_graph(subgraph,node_size=600,font_size=16,title_size=16)
-print("Transportation Mode Preference:",weights)
-```
-
-## Agent-based Modelling
-
-### Generate Profile
-
-- The agent generate realistic profiles based on demongraphic data
-- It then choose a random location as home wighted by cencus block population
-
-```python
-from mobility_agent.agent import MobilityAgent
-
-agent = MobilityAgent(city="Cambridge,MA")
-print("Profile:",agent.profile)
-print("Home:", agent.memory_locations)
-```
-
-### Create Time Schedule
-
-- The agent first creates a full-day activity plan.
-
-- For each activity, it searches for nearby points of interest (POIs) based on their profile, and prefered mode of transportation.
-
-- It then selects the most suitable POI to visit and save it to the working meomory of the agent.
-
-- The agent will save important locations such as home, work, school to `agent.memory_locations`
-
-```python
-agent.get_time_schedule()
-print("Time Schudule:",agent.time_schedule)
-```
-
-### Memories
-
-
-```
-print(agent.working_memory)
-```
-
-
-```
-print(agent.memory_locations)
-```
+  <img src="results/manhattan/exp2_traffic_map_residents_light.png" alt="Real vs. simulated traffic flow across Manhattan, residents only" width="700">
