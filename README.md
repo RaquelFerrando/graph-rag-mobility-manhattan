@@ -86,15 +86,15 @@ does. All paths are relative to the repository root.
 | Script | Input | Output |
 |---|---|---|
 | `eval_manhattan_exp1.py` | eval set, `exp1_test_1000.json` | Mode/duration KLD and MAE for Experiment I, printed and saved to `exp1_validation_summary.json` |
-| `eval_manhattan_exp1_graph_only.py` | reference set, eval set | Ablation: aggregate mode/duration accuracy from the graph alone, without the LLM call |
-| `analyze_manhattan_exp1_deepdive.py` | eval set, `exp1_test_1000.json` | Finer-grained breakdown of Experiment I's aggregate numbers |
+| `eval_manhattan_exp1_graph_only.py` | reference set, eval set | `exp1_graph_only_1000.json`, an ablation: aggregate mode/duration accuracy from the graph alone, without the LLM call |
+| `analyze_manhattan_exp1_deepdive.py` | eval set, `exp1_test_1000.json` | `exp1_deepdive.json`, a finer-grained breakdown of Experiment I's aggregate numbers |
 | `eval_manhattan_exp1_discriminative_power.py` | `exp1_test_1000.json` | `exp1_discriminative_power.json`, per-mode AUC/p-value for whether the graph's choice-weight for a mode actually predicts it was the true answer |
 | `eval_manhattan_exp2_demographics.py` | `exp2_agents_1000.json`, real reference trips | `exp2_demographics_validation.json` |
 | `eval_manhattan_exp2_geography.py` | agent file, `replica-manhattan-cencus.geojson` | `exp2_geography_validation.json` |
 | `eval_manhattan_exp2_modeshare.py` | eval set, agent file | `exp2_modeshare_validation.json`, Experiment II's headline mode-share KLD |
 | `eval_manhattan_exp2_poi.py` | agent file, `replica-manhattan-poi.csv` | `exp2_poi_validation.json` |
 | `eval_manhattan_exp2_traffic.py` | `replica-manhattan-roads-real.geojson`, agent file | `exp2_traffic_edges.geojson`, `exp2_traffic_validation.json` |
-| `eval_manhattan_exp2_traffic_residents.py` | roads-real, census, reference set, eval set, the edges file above | `exp2_traffic_residents_validation.json`, a resident-only traffic comparison (see [methodological findings](#methodological-findings-not-fixed-documented)) |
+| `eval_manhattan_exp2_traffic_residents.py` | roads-real, census, reference set, eval set, the edges file above | `exp2_traffic_residents_edges.geojson`, `exp2_traffic_residents_validation.json`, a resident-only traffic comparison (see [methodological findings](#methodological-findings-not-fixed-documented)) |
 | `eval_profile_calibration.py` | `exp2_profile_calibration_sample.json` (synthetic profiles), real reference trips | Printed comparison of the synthetic profile generator's output distribution against real demographics |
 
 ### Plotting
@@ -102,8 +102,8 @@ does. All paths are relative to the repository root.
 | Script | Input | Output |
 |---|---|---|
 | `plot_graph_example.py` | reference set | `graph_example.png`, a rendered example retrieval subgraph |
-| `plot_manhattan_distributions.py` | eval set, `exp1_test_1000.json` | Distribution comparison charts for Experiment I |
-| `plot_manhattan_exp2_distributions.py` | agent file, eval set, reference set, census | 5 comparison charts plus `exp2_schedule_coherence.json` |
+| `plot_manhattan_distributions.py` | eval set, `exp1_test_1000.json` | `exp1_distribution_comparison.png` |
+| `plot_manhattan_exp2_distributions.py` | agent file, eval set, reference set, census | `exp2_mode_duration_comparison.png`, `exp2_trip_purpose_comparison.png`, `exp2_demographics_comparison.png`, `exp2_geography_decile.png`, `exp2_starttime_by_hour.png`, `exp2_schedule_coherence.json` |
 | `plot_manhattan_traffic_map.py` | roads-real, traffic edges | `exp2_traffic_map_vs_everyone.png` |
 | `plot_manhattan_traffic_map_residents.py` | roads-real, both traffic-edges files | `exp2_traffic_map_residents.png` |
 | `export_trip_paths_for_animation.py` | roads-real, census, reference set, eval set, agent file | `anim_real_trips.json` / `anim_sim_trips.json`, trip paths for animation |
