@@ -1,0 +1,72 @@
+{
+  "auto_passenger": {
+    "n_pos": 109,
+    "n_neg": 891,
+    "median_weight_when_true": 0.05,
+    "median_weight_when_false": 0.0,
+    "mean_weight_when_true": 0.07309174311926606,
+    "mean_weight_when_false": 0.0417631874298541,
+    "auc_discriminative_power": 0.6149620568580814,
+    "p_value": 6.357162972874637e-06
+  },
+  "biking": {
+    "n_pos": 52,
+    "n_neg": 948,
+    "median_weight_when_true": 0.05,
+    "median_weight_when_false": 0.05,
+    "mean_weight_when_true": 0.06342307692307693,
+    "mean_weight_when_false": 0.06538080168776372,
+    "auc_discriminative_power": 0.4950503083414476,
+    "p_value": 0.5494939016369563
+  },
+  "on_demand_auto": {
+    "n_pos": 51,
+    "n_neg": 949,
+    "median_weight_when_true": 0.05,
+    "median_weight_when_false": 0.0,
+    "mean_weight_when_true": 0.09413725490196077,
+    "mean_weight_when_false": 0.05948155953635406,
+    "auc_discriminative_power": 0.6204467034442861,
+    "p_value": 0.0007699022393080789
+  },
+  "other_travel_mode": {
+    "n_pos": 14,
+    "n_neg": 986,
+    "median_weight_when_true": 0.0,
+    "median_weight_when_false": 0.0,
+    "mean_weight_when_true": 0.06785714285714287,
+    "mean_weight_when_false": 0.00397261663286004,
+    "auc_discriminative_power": 0.549007534048102,
+    "p_value": 0.052320947379524155
+  },
+  "private_auto": {
+    "n_pos": 72,
+    "n_neg": 928,
+    "median_weight_when_true": 0.2,
+    "median_weight_when_false": 0.035500000000000004,
+    "mean_weight_when_true": 0.2404166666666667,
+    "mean_weight_when_false": 0.08621228448275861,
+    "auc_discriminative_power": 0.7947722102490422,
+    "p_value": 8.726646014007396e-19
+  },
+  "public_transit": {
+    "n_pos": 379,
+    "n_neg": 621,
+    "median_weight_when_true": 0.45,
+    "median_weight_when_false": 0.3,
+    "mean_weight_when_true": 0.4617968337730871,
+    "mean_weight_when_false": 0.3410644122383253,
+    "auc_discriminative_power": 0.6720286880892594,
+    "p_value": 2.806136016564419e-20
+  },
+  "walking": {
+    "n_pos": 323,
+    "n_neg": 677,
+    "median_weight_when_true": 0.4,
+    "median_weight_when_false": 0.20700000000000002,
+    "mean_weight_when_true": 0.4612693498452013,
+    "mean_weight_when_false": 0.2548389955686854,
+    "auc_discriminative_power": 0.7603980408924824,
+    "p_value": 4.863435395460087e-41
+  }
+}

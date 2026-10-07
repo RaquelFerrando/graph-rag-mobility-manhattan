@@ -1,0 +1,18 @@
+{
+  "n_links_total": 48153,
+  "n_graph_nodes": 24787,
+  "n_graph_edges": 28199,
+  "n_legs_total": 7279,
+  "n_legs_routed": 7151,
+  "n_legs_no_path": 73,
+  "n_edges_with_sim_traffic": 22865,
+  "kld": 2.6928981443038102,
+  "mae": 6.369829785129162e-05,
+  "paper_cambridge_kld_noref": 0.8144221537414615,
+  "paper_cambridge_kld_ref": 0.6215056909459673,
+  "scope_caveat": "Real trip_count reflects ALL Manhattan street traffic (residents + commuters + tourists + commercial); our simulated population is Manhattan RESIDENTS ONLY (same scope mismatch does not affect the mode-choice validation, which compares residents vs residents on both sides) - so a raw KLD on absolute counts is not a fair test of the model. Rank-based metrics below are a fairer read of what a resident-only simulation could plausibly be expected to capture.",
+  "spearman_rank_correlation": 0.1799,
+  "spearman_pvalue": 1.21e-165,
+  "pearson_correlation_log1p": 0.1488,
+  "top_decile_overlap": {"10pct": 0.100, "25pct": 0.317, "50pct": 0.583, "note": "chance baseline for top-X% overlap is X% itself; near-chance at top 10% (dominated by major arteries/through-traffic) but above-chance from 25% up (more local/resident-driven streets)"}
+}

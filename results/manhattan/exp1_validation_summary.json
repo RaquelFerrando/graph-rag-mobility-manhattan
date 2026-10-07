@@ -1,0 +1,29 @@
+{
+  "n_rows": 1000,
+  "aggregate": {
+    "mode": {
+      "kld": 0.061661239957286014,
+      "mae": 0.02542857142857143
+    },
+    "duration": {
+      "kld": 0.1224951268202855,
+      "mae": 0.037428571428571436
+    }
+  },
+  "trivial_baseline": {
+    "majority_mode": "public_transit",
+    "majority_duration": "0-10",
+    "mode": {
+      "kld": 12.770017537443668,
+      "mae": 0.17742857142857144
+    },
+    "duration": {
+      "kld": 15.14048194217488,
+      "mae": 0.20857142857142857
+    }
+  },
+  "paper_metric_per_subgroup": {
+    "overall_kl": 0.39189976221432465,
+    "overall_mae": 0.054550000428643955
+  }
+}

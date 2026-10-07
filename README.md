@@ -1,164 +1,308 @@
-# mobility_agent_ny — Manhattan replication
+# Simulating Manhattan
+
+This project validates an LLM-based synthetic mobility population, built with a Graph RAG /
+"Preference Chain" architecture, against real mobility data for Manhattan, NY, a much larger
+and denser city than the original paper validates on.
+
+**Approach**: the code release for *"Graph RAG as Human Choice Model: Building a
+Data-Driven Mobility Agent with Preference Chain"* (Kai Hu et al. 2025, arXiv:2508.16172)
+only validates on Cambridge, MA and San Francisco, CA. This project fixed [8 blocking
+bugs](#bug-fixes) that prevented it from running at all, built a full data pipeline sourcing
+real Replica, OpenStreetMap, Census ACS, and Advan data for Manhattan, and ran both of the
+paper's own validation experiments at full scale (1000 rows / 1000 agents) against real
+Manhattan trip data.
+
+**Results**: both experiments beat a trivial "always predict the majority class" baseline by
+orders of magnitude. Mode-share KL divergence came out at **0.062** for Experiment I
+(single-trip prediction) and **0.039** for Experiment II (full-day synthetic population),
+against a trivial baseline of 12-15. Full numbers are in [Current status](#current-status).
+
+**Reusing this for another city**: the data pipeline below is a documented recipe rather
+than a one-off for Manhattan. Swap each raw source (Replica study area, OpenStreetMap place
+name, local census geography) for a new city's equivalent, and the scripts' output schemas
+stay the same.
+
+**Contents**: [Data pipeline](#data-pipeline-manhattan) &middot;
+[Scripts](#scripts) &middot; [Bug fixes](#bug-fixes) &middot;
+[Experiment configuration](#experiment-configuration) &middot;
+[Methodological findings](#methodological-findings-not-fixed-documented) &middot;
+[Current status](#current-status) &middot;
+[Original setup instructions (upstream)](#original-setup-instructions-upstream)
+
+---
 
 This is a fork of [kekehurry/mobility_agent](https://github.com/kekehurry/mobility_agent),
-the code release for *"Graph RAG as Human Choice Model: Building a Data-Driven Mobility
-Agent with Preference Chain"* (arXiv:2508.16172). The original paper only validates the
-method on Cambridge, MA and San Francisco, CA. This fork replicates the same methodology
-for **Manhattan, NY**, using real Replica, Advan (formerly SafeGraph), and Census ACS data,
-to check whether the method's reported results generalize to a new, much larger and denser
-city.
+the original paper's own code release, with its git history preserved.
 
-Git history is preserved from the original repo. Everything from here down documents what
-changed and why, split into three parts: **bug fixes** (restoring behavior the paper itself
-describes), **hardware-driven substitutions** (this ran on a laptop with a 4GB GPU, not
-whatever the original authors used), and **methodological findings** (real limitations of
-the method surfaced by testing it somewhere the original authors didn't).
+## Data pipeline (Manhattan)
+
+The method needs five kinds of real-world input for a given city: real trip records (to
+ground and evaluate the synthetic agents against), resident demographics (to generate
+realistic profiles), a street network (to route simulated trips), points of interest (the
+places an agent can choose to visit), and, where available, real traffic counts (to validate
+simulated flows against). Most of these come from [Replica](https://replicahq.com), a
+platform that publishes modeled trip, demographic, and traffic data for US metro areas; the
+rest come from OpenStreetMap, local census open-data portals, and Advan.
+
+The files below are not committed to this repository. Each is either a raw export from one
+of those sources or a deterministic rebuild produced by the corresponding script. This also
+means the same recipe transfers to a different city. Swap each raw source for that city's
+equivalent (Replica study area, OSM place name, local open-data portal, Census geography),
+and the scripts' output schemas stay the same. Each script's own constants name exactly
+which columns it reads from its raw source, for example `build_manhattan_census.py` expects
+`GEOID`/`geometry` from the tract polygons; check the relevant script for a new city's exact
+field requirements.
+
+All paths relative to `data/`, built by the scripts in `scripts/`:
+
+| File | Source | Script |
+|---|---|---|
+| `reference/replica-manhattan_trips.csv` (5000-row) | Replica Trips export (raw, full export) | `build_manhattan_ref_eval_split.py` |
+| `eval/replica-manhattan_trips_eval.csv` (1000-row) | same Trips export, disjoint sample (seed 42) | `build_manhattan_ref_eval_split.py` |
+| `eval/replica-manhattan_trips_eval_max60_1000.csv` | same Trips export, duration&le;60min, disjoint from the above | `build_manhattan_eval_max60.py` |
+| `geo/replica-manhattan-cencus.geojson` | NYC Open Data "2020 Census Tracts" (tract polygons) + Census ACS 5yr B01003_001E (population per tract) | `build_manhattan_census.py` |
+| `geo/replica-manhattan-demographics.json` | Replica People export, 888,862 unique people | `build_manhattan_demographics.py` |
+| `geo/replica-manhattan-poi.csv` | Advan Weekly Patterns Plus, 4 weekly parquet files | `build_manhattan_poi.py` |
+| `geo/replica-manhattan-roads.geojson` | OpenStreetMap via `osmnx` (automated, no account/export needed) | `build_manhattan_roads.py` |
+| `geo/replica-manhattan-roads-real.geojson` | Replica Network Link Volumes export (Geo Area: New York, NY, wider than Manhattan, filtered down) | `build_manhattan_network_volumes.py` |
+
+`CENSUS_API_KEY` (free, https://api.census.gov/data/key_signup.html) is required only by
+`build_manhattan_census.py` and should be set as an environment variable.
+
+## Scripts
+
+Everything under `scripts/`, beyond the data-pipeline builders above, grouped by what it
+does. All paths are relative to the repository root.
+
+### Running the experiments
+
+| Script | Input | Output |
+|---|---|---|
+| `run_experiment1_manhattan.py` | `data/eval/replica-manhattan_trips_eval_max60_1000.csv`, `data/reference/replica-manhattan_trips.csv` | `results/manhattan/exp1_test_1000.json` (one mode/duration prediction per eval row) |
+| `run_experiment2_manhattan.py` | `data/reference/replica-manhattan_trips.csv` | `results/manhattan/exp2_agents_1000.json` (1000 synthetic agents, each with a full-day schedule) |
+
+### Computing results
+
+| Script | Input | Output |
+|---|---|---|
+| `eval_manhattan_exp1.py` | eval set, `exp1_test_1000.json` | Mode/duration KLD and MAE for Experiment I, printed and saved to `exp1_validation_summary.json` |
+| `eval_manhattan_exp1_graph_only.py` | reference set, eval set | Ablation: aggregate mode/duration accuracy from the graph alone, without the LLM call |
+| `analyze_manhattan_exp1_deepdive.py` | eval set, `exp1_test_1000.json` | Finer-grained breakdown of Experiment I's aggregate numbers |
+| `eval_manhattan_exp1_discriminative_power.py` | `exp1_test_1000.json` | `exp1_discriminative_power.json`, per-mode AUC/p-value for whether the graph's choice-weight for a mode actually predicts it was the true answer |
+| `eval_manhattan_exp2_demographics.py` | `exp2_agents_1000.json`, real reference trips | `exp2_demographics_validation.json` |
+| `eval_manhattan_exp2_geography.py` | agent file, `replica-manhattan-cencus.geojson` | `exp2_geography_validation.json` |
+| `eval_manhattan_exp2_modeshare.py` | eval set, agent file | `exp2_modeshare_validation.json`, Experiment II's headline mode-share KLD |
+| `eval_manhattan_exp2_poi.py` | agent file, `replica-manhattan-poi.csv` | `exp2_poi_validation.json` |
+| `eval_manhattan_exp2_traffic.py` | `replica-manhattan-roads-real.geojson`, agent file | `exp2_traffic_edges.geojson`, `exp2_traffic_validation.json` |
+| `eval_manhattan_exp2_traffic_residents.py` | roads-real, census, reference set, eval set, the edges file above | `exp2_traffic_residents_validation.json`, a resident-only traffic comparison (see [methodological findings](#methodological-findings-not-fixed-documented)) |
+| `eval_profile_calibration.py` | `exp2_profile_calibration_sample.json` (synthetic profiles), real reference trips | Printed comparison of the synthetic profile generator's output distribution against real demographics |
+
+### Plotting
+
+| Script | Input | Output |
+|---|---|---|
+| `plot_graph_example.py` | reference set | `graph_example.png`, a rendered example retrieval subgraph |
+| `plot_manhattan_distributions.py` | eval set, `exp1_test_1000.json` | Distribution comparison charts for Experiment I |
+| `plot_manhattan_exp2_distributions.py` | agent file, eval set, reference set, census | 5 comparison charts plus `exp2_schedule_coherence.json` |
+| `plot_manhattan_traffic_map.py` | roads-real, traffic edges | `exp2_traffic_map_vs_everyone.png` |
+| `plot_manhattan_traffic_map_residents.py` | roads-real, both traffic-edges files | `exp2_traffic_map_residents.png` |
+| `export_trip_paths_for_animation.py` | roads-real, census, reference set, eval set, agent file | `anim_real_trips.json` / `anim_sim_trips.json`, trip paths for animation |
+
+### Diagnostics behind specific findings above
+
+| Script | Input | What it established |
+|---|---|---|
+| `check_graph_mode_coverage.py` | eval set, reference set | At `sample_num=50`, biking is never recalled (bug fix #8 context) |
+| `check_graph_recall.py` | eval set, reference set (`sample_num` as a CLI argument) | Per-mode recall by `sample_num`, the basis for choosing 200 |
+| `investigate_time_weight_effect.py` | reference set, eval set | A concrete before/after numeric example of bug fix #8 (`choose_to`) |
+| `explore_manhattan_demographics.py` | raw Replica People export (~2GB) | The category-mapping decisions used by `build_manhattan_demographics.py` |
+| `calibrate_profile_generator.py` | (generates synthetic profiles internally) | `exp2_profile_calibration_sample.json`, the input to `eval_profile_calibration.py` |
+| `inspect_similarity_matches.py` | eval set, reference set | A check that the embedding-based similarity search retrieves genuinely similar people |
+| `check_neighborhoods.py` | `exp2_agents_1000.json` | `exp2_agent_neighborhoods.json`, each agent's home reverse-geocoded to a real neighborhood |
+| `compare_sampling_vs_max.py` | a results file (`exp1_test_1000.json` by default) | Printed comparison of weighted-sampling accuracy vs. always taking the top-weighted choice |
+| `test_child_school_poi.py` | reference set | A check that a minor agent is assigned a K-12 school, not an adult workplace |
+
+### Development utilities
+
+Kept for transparency even though they don't feed a specific number above.
+
+| Script | Input | Output |
+|---|---|---|
+| `show_real_prompt.py` | eval set, reference set | Prints the exact prompt text sent to the LLM for one real row |
+| `trace_full_pipeline.py` | reference set | Prints a full trace of one synthetic agent's day, including every real LLM call |
+
+---
+
+Everything from here down documents what changed in the forked code and why, in three parts:
+**bug fixes** (restoring behavior the paper itself describes), **model setup** (ran locally,
+self-hosted, not a paid API), and **methodological findings** (properties of the method
+documented below).
 
 ## Bug fixes
 
 Each is its own commit with the full rationale; summarized here for reference.
 
-1. **`_similarity_search` was missing** (`mobility_agent/graph.py`) — called by
-   `_get_reference_graph` but never defined anywhere in the released code, so any run with
-   `use_reference=True` crashed. Implemented per the paper's sec 3.2 description (embed the
-   query profile, rank all `person` nodes by cosine similarity, return the top-k).
+1. **`_similarity_search` was missing** (`mobility_agent/graph.py`). It's called by
+   `_get_reference_graph` but was never defined anywhere in the released code, so any run
+   with `use_reference=True` crashed. Implemented per the paper's sec 3.2 description (embed
+   the query profile, rank all `person` nodes by cosine similarity, return the top-k).
 2. **The graph's computed weights never reached the LLM** (`mobility_agent/agent.py`,
-   `get_mode_prefernce`) — the paper (sec 3.4) describes the graph's probabilities as a
-   *prior* the LLM calibrates; the original prompt listed the candidate mode/duration
+   `get_mode_prefernce`). The paper (sec 3.4) describes the graph's probabilities as a
+   *prior* the LLM calibrates, but the original prompt listed the candidate mode/duration
    options with no numbers attached, so the LLM had nothing to calibrate against and just
    invented a fresh distribution. Now passes `prior_weight` per option explicitly.
 3. **Profile-correction fallback crashed instead of degrading gracefully**
-   (`mobility_agent/tools.py`, `ProfileGeneratorTool.generate_profile`) — added one retry
+   (`mobility_agent/tools.py`, `ProfileGeneratorTool.generate_profile`). Added one retry
    (most failures here are a locally-hosted Ollama being briefly busy) and a counter of how
-   many profiles fall back uncorrected; the fallback path itself also had two latent type
+   many profiles fall back uncorrected. The fallback path itself also had two latent type
    bugs (age as a list, not int; `available_vehicles` as a category string, not int) that
    crashed instead of returning a usable profile.
 4. **`sentence_transformers` import was fragile and unused everywhere but one call**
-   (`mobility_agent/graph.py`) — pulled in the full torch/transformers stack for a single
+   (`mobility_agent/graph.py`). It pulled in the full torch/transformers stack for a single
    `util.cos_sim()` call, when the class already has its own numpy `_cosine_similarity`. The
    import was also actively broken on a fresh install (needs torch>=2.5, this environment
    has 2.4.1). Removed the dependency entirely.
-5. **`geopandas.read_file()` crashed on non-cp1252 characters** (`mobility_agent/tools.py`)
-   — GDAL's CSV driver defaults to the system codepage on Windows; Manhattan POI names with
+5. **`geopandas.read_file()` crashed on non-cp1252 characters** (`mobility_agent/tools.py`).
+   GDAL's CSV driver defaults to the system codepage on Windows, so Manhattan POI names with
    characters outside cp1252 (from the source Advan data) crashed outright instead of just
    rendering oddly. Passes `encoding='utf-8'` explicitly.
 6. **LLM output parsing wasn't robust to minor format drift** (`mobility_agent/agent.py`,
-   `mobility_agent/tools.py`) — a strict `strptime("%H:%M")` on the LLM-generated schedule's
-   start time crashed (and silently dropped that whole activity) on anything but an exact
-   match, e.g. added seconds; a trailing/double comma in the LLM's NAICS code list crashed
-   `int('')`. Smaller local models (see below) hit these far more often than whatever model
-   the original authors used. Time parsing now falls back to `dateutil.parser`; NAICS
-   parsing filters empty pieces.
+   `mobility_agent/tools.py`). A strict `strptime("%H:%M")` on the LLM-generated schedule's
+   start time crashed, and silently dropped that whole activity, on anything but an exact
+   match, such as added seconds. A trailing or double comma in the LLM's NAICS code list
+   crashed `int('')`. Smaller local models, tried during development but not what produced
+   the final results, hit these far more often than whatever model the original authors
+   used. Time parsing now falls back to `dateutil.parser`, and NAICS parsing filters empty
+   pieces.
 7. **Desire-weighting embedded one node at a time instead of batching**
-   (`mobility_agent/graph.py`, `_get_reference_graph`) — up to k=20+ sequential HTTP calls
-   to the local embedding server per single `preference_modelling()` call, each one a
-   chance to stall. Batched into one call, matching how `_embedding_graph` already batches
-   person-node embeddings.
+   (`mobility_agent/graph.py`, `_get_reference_graph`). This meant up to k=20+ sequential
+   HTTP calls to the local embedding server per single `preference_modelling()` call, each
+   one a chance to stall. Now batched into one call, matching how `_embedding_graph` already
+   batches person-node embeddings.
+8. **The `choose_to` (time-closeness) edge weight was inverted** (`mobility_agent/graph.py`).
+   The original formula, `abs(time-start_time)/24`, computes a raw time distance. After
+   max-normalization this gave the neighbor with the *least* similar time of day the highest
+   weight, and an exact time match a weight of 0, the opposite of what "time closeness" is
+   meant to do. Inherited unchanged from the original paper's code. **Fixed in the code, but
+   not re-run against the LLM**: this landed after the full-scale runs in
+   [Current status](#current-status), so those numbers reflect the inverted weight, not the
+   corrected one.
 
-## Hardware-driven substitutions
+## Experiment configuration
 
-This ran on a laptop with an **NVIDIA RTX 2050 (4GB VRAM)** — the paper uses `qwen3:8b`
-(~5.2GB quantized). None of this is a methodology change; it's what was necessary to get a
-working local LLM at all without paid API access.
+The method has a few knobs, each explained below with what it controls, what the paper
+itself used, and what this fork used, so the two are easy to compare without having read
+the original repo.
 
-- **Model: `qwen2.5:3b` instead of `qwen3:8b`.** `qwen3:8b` and even `qwen3:4b` didn't fit
-  in 4GB alongside the embedding model (`mxbai-embed-large`) and got partially offloaded to
-  CPU — a single full agent took 2+ hours, sometimes longer. `qwen3`'s `/no_think` workaround
-  (needed because it's a hybrid reasoning model) also never reliably suppressed its
-  "thinking" step here, adding hundreds of wasted tokens per call. `qwen2.5:3b` has no
-  reasoning mode to fight with, fits fully in VRAM, and measured ~35-41 tok/s. `llama3.2:3b`
-  was also tried (the paper's own Appendix found Llama competitive with Qwen3 in some
-  conditions) but was both slower end-to-end and hit more distinct parsing failures in
-  practice — see `Modelfile.qwen2.5-3b` / `Modelfile.llama3.2-3b` for the exact configs
-  tried, including a reduced `num_ctx` (2048, down from the 4096 default) needed to keep
-  the LLM fully GPU-resident alongside the embedding model.
-- **Reduced reference graph size for exploration (`sample_num=5000`) vs. actual experiments
-  (`sample_num=50`).** The paper itself found 50-100 reference samples sufficient (diminishing
-  returns beyond that) and used 50 for its own full-population experiment (sec 5) — the 5000
-  figure was only used early on to explore the graph's structure, not for the numbers below.
-- A large chunk of debugging time went to **orphaned `llama-server.exe` processes**
-  accumulating VRAM usage across repeated kills/restarts during iteration — not a code issue,
-  but worth knowing if this pipeline mysteriously slows down again: check `nvidia-smi` for
-  more `llama-server.exe` processes than loaded models, and kill everything before restarting
-  Ollama.
+**The LLM.** Ran **locally** (self-hosted via Ollama, not a paid API) on GPU hardware, using
+`qwen3-nothink`, which matches the paper's own `qwen3:8b`, unchanged. Its `/no_think`
+workaround is applied since it's a hybrid reasoning model and the paper's prompts assume no
+visible "thinking" step. Decoding settings (temperature, top-k/top-p sampling, stop tokens)
+are whatever `Modelfile` in this directory declares; nothing here was separately tuned.
 
-## Methodological findings (not fixed — documented)
+**The reference graph.** For each query, the method retrieves real people similar to the
+querying agent, then uses their recorded choices as grounding context for the LLM. Three
+settings control this, from `mobility_agent/graph.py`'s `preference_modelling()`:
+
+- `sample_num`: how many real reference people are embedded and available to be found as
+  similar in the first place, the size of the candidate pool. **Changed: 200 here, not the
+  paper's own 50.** The paper found 50-100 sufficient for Cambridge and used 50 for its own
+  full-population experiment (sec 5). At 50, biking (about 4% of Manhattan trips) was never
+  recalled at all, 0 out of 14 real biking rows, even when it was the correct answer (found
+  with `scripts/check_graph_mode_coverage.py`). Sweeping `sample_num` in {50, 100, 200}
+  (`scripts/check_graph_recall.py`) found 200 gives the best overall recall (96.5% vs. 88%
+  at 50), fixing biking (0% to 100%) along with private_auto and on_demand_auto, without
+  pushing any other mode to 0% recall. An even larger pool (`sample_num=5000`) was used only
+  early on, to explore the graph's structure, and isn't what produced the numbers below.
+- `k`: of that pool, how many of the most similar people (by embedding similarity to the
+  querying agent's profile) actually get retrieved and used. **Unchanged: 20, the paper's
+  own default.**
+- `depth`: for each of those `k` people, how many steps of the graph are pulled in around
+  them (their own recorded trip choices) to build the context the LLM sees. **Unchanged: 4,
+  the paper's own default.**
+
+**Scale.** Both experiments ran on **N=1000** rows/agents, matching the paper's own
+full-population scale (not a smaller sample).
+
+## Methodological findings (not fixed, documented)
 
 These are real properties of the method/paper that testing on Manhattan surfaced. Fixing
 them would change the methodology being reproduced, which isn't this fork's goal.
 
-- **Replica's "Home Location" filter conditions on having taken a trip.** To restrict a
-  Replica study area's People export to Manhattan, you filter by Home Location — but per
-  Replica's own documentation, once *any* filter is active the People table represents only
-  "the traveling population," not full residents. There's no way in the Studio UI to get a
-  geographically-restricted, non-traveler-inclusive population, so `demographics.json` is
-  built from a population implicitly conditioned on having traveled that day.
+- **Replica's "Home Location" filter conditions on having taken a trip, and restricts the
+  export to residents only.** To restrict a Replica study area's People export to Manhattan,
+  you filter by Home Location. But per Replica's own documentation, once *any* filter is
+  active, the People table represents only "the traveling population," not full residents,
+  and the Studio UI gives no way around that traveler-conditioning. `demographics.json` is
+  therefore built from a population implicitly conditioned on having traveled that day. The
+  resident-only part is specific to this filter, not to Replica's data: a Trips export (for
+  example "Trip Intersects", pulled wider than the study area) carries each trip-taker's own
+  `trip_taker_home_trct_2020`/`trip_taker_work_trct_2020` fields on every row, independent of
+  that trip's geography. That means residents and inbound commuters can be told apart
+  without the Home Location filter at all, by classifying trip-takers on those fields
+  directly instead of relying on a geographically-filtered People export. The
+  traveler-conditioning itself still applies either way, since both routes only see people
+  who took a trip that day.
 - **The reference graph's row-level sampling means "reference schedules" aren't anyone's
-  actual day.** `BehaviorGraph._load_data()` samples individual trip *rows*, not people —
-  each reference person contributes ~1 of their ~4 daily trips on average. When
+  actual day.** `BehaviorGraph._load_data()` samples individual trip *rows*, not people, so
+  each reference person contributes about 1 of their roughly 4 daily trips on average. When
   `make_a_plan()` builds a "reference schedule from people with similar profile" to show the
   LLM, it's actually a collage of single moments from many different people, not one
-  person's coherent day. (A person-level sampling variant — same person count, but pulling
-  *all* their trips — would fix this and is a natural follow-up experiment, not attempted here.)
+  person's coherent day. (A person-level sampling variant, with the same person count but
+  pulling *all* their trips, would fix this. It's a natural follow-up experiment, not
+  attempted here.)
 - **POI search's "20 nearest" cutoff neutralizes the point of a wide search radius.**
   `POISearchTool.find_nearby_pois` filters by the LLM-chosen `[min, max]` distance, then
   always truncates to the 20 physically closest results before the LLM ever sees them. In a
-  POI-dense area like Manhattan (e.g. 11,047 restaurants city-wide), a wide radius (meant to
-  let an agent traveling by car go further) almost never matters in practice — proximity
-  wins regardless, except for genuinely rare categories.
+  POI-dense area like Manhattan (11,047 restaurants city-wide, for example), a wide radius,
+  meant to let an agent traveling by car go further, almost never matters in practice.
+  Proximity wins regardless, except for genuinely rare categories.
 - **`desire`/schedule-activity type is a free-form string, not an enum**, despite being
-  described as one of 9 fixed categories (`ScheduleItem.desire: str` in `agent.py`) — the
+  described as one of 9 fixed categories (`ScheduleItem.desire: str` in `agent.py`), so the
   LLM isn't constrained to emit exactly one of them. The graph's downstream desire-matching
-  step uses semantic similarity (rather than exact match) partly to tolerate this, and partly
-  because a small retrieved neighborhood (k~20 people) may not contain an exact category
-  match at all — exact-match would sometimes make every `want_to` edge weight 0 and crash the
-  normalization step.
+  step uses semantic similarity rather than exact match, partly to tolerate this, and partly
+  because a small retrieved neighborhood (around k=20 people) may not contain an exact
+  category match at all. Exact match would sometimes make every `want_to` edge weight 0 and
+  crash the normalization step.
 - **The duration schema implicitly assumes no trip exceeds 60 minutes.** The paper's own
   data schema (Table 1) and the LLM prompt's `Available Duration Choices` both stop at
-  `50-60`. 11.6% of the raw Manhattan eval set exceeds that (max 1415 minutes) — likely
-  because Manhattan's real commute-shed is much larger than Cambridge/SF's. Since
-  `get_mode_prefernce` returns mode and duration as one coupled `(mode, duration)` choice
-  (not decided independently — see the graph's merged `Intention` nodes and the
-  `choice_weights` prompt format), a duration outside the offered range could also distort
-  the *mode* prediction for that row, not just duration. `scripts/build_manhattan_eval_max60.py`
-  builds a fresh 1000-row eval set staying within the schema's implicit assumption, rather
-  than silently keeping the out-of-range rows in the reported numbers.
-
-## Data pipeline (Manhattan)
-
-All under `data/`, built by the scripts in `scripts/`:
-
-| File | Source | Script |
-|---|---|---|
-| `reference/replica-manhattan_trips.csv` | Replica trips export, 5000-row sample | `build_manhattan_ref_eval_split.py` |
-| `eval/replica-manhattan_trips_eval_max60_1000.csv` | Replica trips export, 1000-row sample, duration<=60min | `build_manhattan_eval_max60.py` |
-| `geo/replica-manhattan-cencus.geojson` | NYC Open Data (tract polygons) + Census ACS 5yr (real population per tract) | `build_manhattan_census.py` |
-| `geo/replica-manhattan-demographics.json` | Replica People export, 888,862 unique people | `build_manhattan_demographics.py` |
-| `geo/replica-manhattan-poi.csv` | Advan Weekly Patterns Plus, 4 weeks, 38,203 unique Manhattan POIs | `build_manhattan_poi.py` |
-
-`CENSUS_API_KEY` in `.env` is a free key from the Census Bureau
-(https://api.census.gov/data/key_signup.html), used only by `build_manhattan_census.py`.
+  `50-60`. 11.6% of the raw Manhattan eval set exceeds that, with a maximum of 1415 minutes,
+  likely because Manhattan's real commute-shed is much larger than Cambridge's or San
+  Francisco's. Since `get_mode_prefernce` returns mode and duration as one coupled
+  `(mode, duration)` choice rather than deciding them independently (see the graph's merged
+  `Intention` nodes and the `choice_weights` prompt format), a duration outside the offered
+  range could also distort the *mode* prediction for that row, not just duration.
+  `scripts/build_manhattan_eval_max60.py` builds a fresh 1000-row eval set that stays within
+  the schema's implicit assumption, rather than silently keeping the out-of-range rows in
+  the reported numbers.
 
 ## Current status
 
-- Experiment I (mode/duration prediction against real eval trips, matching
-  `exp1_step1_agent.ipynb`) — see `scripts/run_experiment1_manhattan.py`. A 1000-row run
-  is the target; smaller test runs (20, 100 rows) came back clean (no errors) after the
-  fixes above, with mode exact-match accuracy around 20-36% (vs. ~14% random baseline
-  across 7 mode categories) — a rough sanity signal, not the paper's actual KLD/MAE metric,
-  which still needs to be computed with `baseline/eval.py`.
-- Experiment II (full synthetic population with day-long schedules, matching
-  `exp2_step1_abm.ipynb`) — attempted at small scale (1-2 agents) during development;
-  works end-to-end but slowly (minutes per agent) and with occasional dropped activities
-  from the parsing-robustness issues above. Not run at the paper's scale (1000 agents) —
-  see the hardware section above for why that isn't practical on this machine.
+Both experiments completed, per the [experiment configuration](#experiment-configuration)
+above. The numbers below predate bug fix #8 (the inverted
+`choose_to` edge weight), so they reflect the reference graph's old, inverted time-closeness
+weighting, not the corrected one. Whether re-running with the fix would move these numbers,
+and by how much, hasn't been tested.
+
+- **Experiment I** (mode/duration prediction against real eval trips, matching
+  `exp1_step1_agent.ipynb`): see `scripts/run_experiment1_manhattan.py` /
+  `scripts/eval_manhattan_exp1.py`. 1000/1000 rows, aggregate KLD: mode-share **0.062**,
+  duration **0.122**, against a trivial "always predict the majority class" baseline of
+  12.77 / 15.14, orders of magnitude worse. The paper's own per-subgroup-averaged metric
+  comes out at 0.39 (`results/manhattan/exp1_validation_summary.json`).
+- **Experiment II** (full synthetic population with day-long schedules, matching
+  `exp2_step1_abm.ipynb`): see `scripts/run_experiment2_manhattan.py`. 1000/1000 agents, 999
+  with a valid schedule (8,278 trips total, 8.3 stops/agent on average), 98.6%
+  chronologically well-ordered. Mode-share KLD **0.039** against real trips
+  (`results/manhattan/exp2_modeshare_validation.json`). Traffic-flow and other
+  per-experiment metrics are in the other `results/manhattan/exp2_*.json` files.
 
 ---
 
 # Original setup instructions (upstream)
 
 The sections below are from the original repo. Where this fork's setup differs (Manhattan
-data files, `qwen2.5:3b` instead of `qwen3-nothink:8b`), see `.env` and the Modelfiles in
+data files, `qwen3-nothink` instead of `qwen3:8b`), see `.env.example` and `Modelfile` in
 this directory instead of the commands below, which are kept for reference/comparison.
 
 ## Init Environment

@@ -1,0 +1,1221 @@
+{
+  "mode_confusion_summary": [
+    {
+      "real_mode": "public_transit",
+      "n": 379,
+      "pct_correct": 0.5092348284960422,
+      "top_confused_with": "walking",
+      "pct_confused_with_top": 0.23482849604221637
+    },
+    {
+      "real_mode": "walking",
+      "n": 323,
+      "pct_correct": 0.43962848297213625,
+      "top_confused_with": "public_transit",
+      "pct_confused_with_top": 0.3188854489164087
+    },
+    {
+      "real_mode": "auto_passenger",
+      "n": 109,
+      "pct_correct": 0.09174311926605505,
+      "top_confused_with": "public_transit",
+      "pct_confused_with_top": 0.3761467889908257
+    },
+    {
+      "real_mode": "private_auto",
+      "n": 72,
+      "pct_correct": 0.2916666666666667,
+      "top_confused_with": "public_transit",
+      "pct_confused_with_top": 0.3472222222222222
+    },
+    {
+      "real_mode": "biking",
+      "n": 52,
+      "pct_correct": 0.11538461538461539,
+      "top_confused_with": "public_transit",
+      "pct_confused_with_top": 0.34615384615384615
+    },
+    {
+      "real_mode": "on_demand_auto",
+      "n": 51,
+      "pct_correct": 0.0784313725490196,
+      "top_confused_with": "public_transit",
+      "pct_confused_with_top": 0.49019607843137253
+    },
+    {
+      "real_mode": "other_travel_mode",
+      "n": 14,
+      "pct_correct": 0.07142857142857142,
+      "top_confused_with": "walking",
+      "pct_confused_with_top": 0.42857142857142855
+    }
+  ],
+  "subgroup_kld_full": [
+    {
+      "feature": "employment_status",
+      "value": "unemployed",
+      "target": "primary_mode",
+      "sample_size": 20,
+      "kl_divergence": 5.044086000609707,
+      "mae": 0.08571428571428573
+    },
+    {
+      "feature": "available_vehicles",
+      "value": "two",
+      "target": "duration_minutes",
+      "sample_size": 24,
+      "kl_divergence": 4.2406670083677085,
+      "mae": 0.09999999999999999
+    },
+    {
+      "feature": "start_time",
+      "value": 6,
+      "target": "primary_mode",
+      "sample_size": 32,
+      "kl_divergence": 3.0872136869417415,
+      "mae": 0.052083333333333336
+    },
+    {
+      "feature": "age_group",
+      "value": "65+",
+      "target": "primary_mode",
+      "sample_size": 120,
+      "kl_divergence": 2.8894499151094406,
+      "mae": 0.08809523809523807
+    },
+    {
+      "feature": "start_time",
+      "value": 11,
+      "target": "primary_mode",
+      "sample_size": 58,
+      "kl_divergence": 2.7575193032789764,
+      "mae": 0.04433497536945812
+    },
+    {
+      "feature": "education",
+      "value": "no_school",
+      "target": "duration_minutes",
+      "sample_size": 21,
+      "kl_divergence": 2.1373577759321343,
+      "mae": 0.1111111111111111
+    },
+    {
+      "feature": "start_time",
+      "value": 19,
+      "target": "duration_minutes",
+      "sample_size": 44,
+      "kl_divergence": 1.5827151347477284,
+      "mae": 0.0909090909090909
+    },
+    {
+      "feature": "trip_purpose",
+      "value": "maintenance",
+      "target": "duration_minutes",
+      "sample_size": 30,
+      "kl_divergence": 1.3312173876125721,
+      "mae": 0.044444444444444446
+    },
+    {
+      "feature": "start_time",
+      "value": 6,
+      "target": "duration_minutes",
+      "sample_size": 32,
+      "kl_divergence": 1.2543781456083347,
+      "mae": 0.0625
+    },
+    {
+      "feature": "education",
+      "value": "no_school",
+      "target": "primary_mode",
+      "sample_size": 21,
+      "kl_divergence": 1.0628028742370037,
+      "mae": 0.09523809523809525
+    },
+    {
+      "feature": "trip_purpose",
+      "value": "recreation",
+      "target": "primary_mode",
+      "sample_size": 61,
+      "kl_divergence": 0.9961318889915748,
+      "mae": 0.051522248243559714
+    },
+    {
+      "feature": "start_time",
+      "value": 13,
+      "target": "primary_mode",
+      "sample_size": 42,
+      "kl_divergence": 0.9431449436757114,
+      "mae": 0.03401360544217687
+    },
+    {
+      "feature": "employment_status",
+      "value": "unemployed",
+      "target": "duration_minutes",
+      "sample_size": 20,
+      "kl_divergence": 0.68465222770106,
+      "mae": 0.15000000000000002
+    },
+    {
+      "feature": "start_time",
+      "value": 11,
+      "target": "duration_minutes",
+      "sample_size": 58,
+      "kl_divergence": 0.667444881385934,
+      "mae": 0.04022988505747127
+    },
+    {
+      "feature": "income_group",
+      "value": "$150k-$200k",
+      "target": "primary_mode",
+      "sample_size": 105,
+      "kl_divergence": 0.5639578400626626,
+      "mae": 0.024489795918367342
+    },
+    {
+      "feature": "age_group",
+      "value": "45-54",
+      "target": "primary_mode",
+      "sample_size": 145,
+      "kl_divergence": 0.5011485680849547,
+      "mae": 0.05517241379310344
+    },
+    {
+      "feature": "income_group",
+      "value": "$100k-$150k",
+      "target": "primary_mode",
+      "sample_size": 128,
+      "kl_divergence": 0.49006634806214633,
+      "mae": 0.033482142857142856
+    },
+    {
+      "feature": "start_time",
+      "value": 19,
+      "target": "primary_mode",
+      "sample_size": 44,
+      "kl_divergence": 0.47894573407293495,
+      "mae": 0.03896103896103897
+    },
+    {
+      "feature": "start_time",
+      "value": 18,
+      "target": "duration_minutes",
+      "sample_size": 56,
+      "kl_divergence": 0.47722767998153154,
+      "mae": 0.1369047619047619
+    },
+    {
+      "feature": "age_group",
+      "value": "35-44",
+      "target": "primary_mode",
+      "sample_size": 189,
+      "kl_divergence": 0.46869731891926764,
+      "mae": 0.03930461073318216
+    },
+    {
+      "feature": "start_time",
+      "value": 14,
+      "target": "duration_minutes",
+      "sample_size": 62,
+      "kl_divergence": 0.460967225432256,
+      "mae": 0.06912442396313365
+    },
+    {
+      "feature": "employment_status",
+      "value": "not_in_labor_force",
+      "target": "primary_mode",
+      "sample_size": 140,
+      "kl_divergence": 0.4265342632380456,
+      "mae": 0.08571428571428572
+    },
+    {
+      "feature": "start_time",
+      "value": 12,
+      "target": "primary_mode",
+      "sample_size": 59,
+      "kl_divergence": 0.37670729574850376,
+      "mae": 0.04519774011299435
+    },
+    {
+      "feature": "start_time",
+      "value": 20,
+      "target": "duration_minutes",
+      "sample_size": 36,
+      "kl_divergence": 0.3703752227015166,
+      "mae": 0.11111111111111112
+    },
+    {
+      "feature": "household_size",
+      "value": 3,
+      "target": "duration_minutes",
+      "sample_size": 166,
+      "kl_divergence": 0.3400107841062918,
+      "mae": 0.06884681583476764
+    },
+    {
+      "feature": "trip_purpose",
+      "value": "work",
+      "target": "primary_mode",
+      "sample_size": 233,
+      "kl_divergence": 0.32832032058965976,
+      "mae": 0.056407112201103615
+    },
+    {
+      "feature": "age_group",
+      "value": "55-64",
+      "target": "duration_minutes",
+      "sample_size": 141,
+      "kl_divergence": 0.30522014032429523,
+      "mae": 0.042553191489361715
+    },
+    {
+      "feature": "income_group",
+      "value": "$200k-$300k",
+      "target": "primary_mode",
+      "sample_size": 122,
+      "kl_divergence": 0.2993061609342238,
+      "mae": 0.0772833723653396
+    },
+    {
+      "feature": "income_group",
+      "value": "$10k-$50k",
+      "target": "primary_mode",
+      "sample_size": 160,
+      "kl_divergence": 0.2747579949985283,
+      "mae": 0.028571428571428577
+    },
+    {
+      "feature": "household_size",
+      "value": 6,
+      "target": "duration_minutes",
+      "sample_size": 22,
+      "kl_divergence": 0.27126127137474343,
+      "mae": 0.10606060606060606
+    },
+    {
+      "feature": "trip_purpose",
+      "value": "school",
+      "target": "primary_mode",
+      "sample_size": 46,
+      "kl_divergence": 0.26227507410002304,
+      "mae": 0.06521739130434782
+    },
+    {
+      "feature": "trip_purpose",
+      "value": "home",
+      "target": "duration_minutes",
+      "sample_size": 352,
+      "kl_divergence": 0.2597470116497958,
+      "mae": 0.05357142857142858
+    },
+    {
+      "feature": "age_group",
+      "value": "65+",
+      "target": "duration_minutes",
+      "sample_size": 120,
+      "kl_divergence": 0.25698471814046847,
+      "mae": 0.05
+    },
+    {
+      "feature": "education",
+      "value": "advanced_degree",
+      "target": "duration_minutes",
+      "sample_size": 329,
+      "kl_divergence": 0.24622234699970147,
+      "mae": 0.03386886669561442
+    },
+    {
+      "feature": "employment_status",
+      "value": "not_in_labor_force",
+      "target": "duration_minutes",
+      "sample_size": 140,
+      "kl_divergence": 0.2442805562728465,
+      "mae": 0.06530612244897958
+    },
+    {
+      "feature": "start_time",
+      "value": 8,
+      "target": "primary_mode",
+      "sample_size": 89,
+      "kl_divergence": 0.24300858366060163,
+      "mae": 0.060995184590690206
+    },
+    {
+      "feature": "trip_purpose",
+      "value": "social",
+      "target": "duration_minutes",
+      "sample_size": 58,
+      "kl_divergence": 0.23689210003186978,
+      "mae": 0.09195402298850575
+    },
+    {
+      "feature": "start_time",
+      "value": 21,
+      "target": "primary_mode",
+      "sample_size": 42,
+      "kl_divergence": 0.2363729953269143,
+      "mae": 0.06349206349206349
+    },
+    {
+      "feature": "education",
+      "value": "high_school",
+      "target": "primary_mode",
+      "sample_size": 104,
+      "kl_divergence": 0.23204930881002106,
+      "mae": 0.046703296703296704
+    },
+    {
+      "feature": "start_time",
+      "value": 22,
+      "target": "duration_minutes",
+      "sample_size": 20,
+      "kl_divergence": 0.22907268271439085,
+      "mae": 0.10000000000000002
+    },
+    {
+      "feature": "employment_status",
+      "value": "under_16",
+      "target": "primary_mode",
+      "sample_size": 64,
+      "kl_divergence": 0.22617182528284174,
+      "mae": 0.06770833333333333
+    },
+    {
+      "feature": "trip_purpose",
+      "value": "work",
+      "target": "duration_minutes",
+      "sample_size": 233,
+      "kl_divergence": 0.22219653938316936,
+      "mae": 0.05027590435315756
+    },
+    {
+      "feature": "income_group",
+      "value": "$100k-$150k",
+      "target": "duration_minutes",
+      "sample_size": 128,
+      "kl_divergence": 0.21987026626913914,
+      "mae": 0.05357142857142857
+    },
+    {
+      "feature": "trip_purpose",
+      "value": "social",
+      "target": "primary_mode",
+      "sample_size": 58,
+      "kl_divergence": 0.2004532548684327,
+      "mae": 0.07389162561576354
+    },
+    {
+      "feature": "available_vehicles",
+      "value": "unknown_num_vehicles",
+      "target": "primary_mode",
+      "sample_size": 35,
+      "kl_divergence": 0.18826347602195836,
+      "mae": 0.06857142857142857
+    },
+    {
+      "feature": "education",
+      "value": "advanced_degree",
+      "target": "primary_mode",
+      "sample_size": 329,
+      "kl_divergence": 0.18496533134511334,
+      "mae": 0.05297438124185844
+    },
+    {
+      "feature": "income_group",
+      "value": "$50k-$100k",
+      "target": "duration_minutes",
+      "sample_size": 186,
+      "kl_divergence": 0.18443091071649056,
+      "mae": 0.05529953917050691
+    },
+    {
+      "feature": "age_group",
+      "value": "35-44",
+      "target": "duration_minutes",
+      "sample_size": 189,
+      "kl_divergence": 0.1831244368675371,
+      "mae": 0.05291005291005291
+    },
+    {
+      "feature": "available_vehicles",
+      "value": "two",
+      "target": "primary_mode",
+      "sample_size": 24,
+      "kl_divergence": 0.18176983961830565,
+      "mae": 0.08333333333333334
+    },
+    {
+      "feature": "income_group",
+      "value": "$10k-$50k",
+      "target": "duration_minutes",
+      "sample_size": 160,
+      "kl_divergence": 0.18131715920138874,
+      "mae": 0.05357142857142857
+    },
+    {
+      "feature": "start_time",
+      "value": 7,
+      "target": "primary_mode",
+      "sample_size": 93,
+      "kl_divergence": 0.17957630849112552,
+      "mae": 0.05017921146953405
+    },
+    {
+      "feature": "income_group",
+      "value": "$300k+",
+      "target": "duration_minutes",
+      "sample_size": 236,
+      "kl_divergence": 0.17878816481811993,
+      "mae": 0.0351089588377724
+    },
+    {
+      "feature": "education",
+      "value": "some_college",
+      "target": "duration_minutes",
+      "sample_size": 142,
+      "kl_divergence": 0.17860721807539587,
+      "mae": 0.04426559356136822
+    },
+    {
+      "feature": "start_time",
+      "value": 9,
+      "target": "duration_minutes",
+      "sample_size": 61,
+      "kl_divergence": 0.17493743004585083,
+      "mae": 0.08196721311475409
+    },
+    {
+      "feature": "household_size",
+      "value": 4,
+      "target": "primary_mode",
+      "sample_size": 136,
+      "kl_divergence": 0.17436375919158817,
+      "mae": 0.046218487394957986
+    },
+    {
+      "feature": "start_time",
+      "value": 14,
+      "target": "primary_mode",
+      "sample_size": 62,
+      "kl_divergence": 0.17209072747446422,
+      "mae": 0.06451612903225806
+    },
+    {
+      "feature": "age_group",
+      "value": "Under 18",
+      "target": "primary_mode",
+      "sample_size": 73,
+      "kl_divergence": 0.17080851068804254,
+      "mae": 0.06392694063926939
+    },
+    {
+      "feature": "start_time",
+      "value": 9,
+      "target": "primary_mode",
+      "sample_size": 61,
+      "kl_divergence": 0.1504455252314829,
+      "mae": 0.07103825136612023
+    },
+    {
+      "feature": "start_time",
+      "value": 10,
+      "target": "primary_mode",
+      "sample_size": 51,
+      "kl_divergence": 0.1453785054997964,
+      "mae": 0.050420168067226885
+    },
+    {
+      "feature": "available_vehicles",
+      "value": "zero",
+      "target": "duration_minutes",
+      "sample_size": 688,
+      "kl_divergence": 0.14327575277947005,
+      "mae": 0.03945182724252492
+    },
+    {
+      "feature": "start_time",
+      "value": 13,
+      "target": "duration_minutes",
+      "sample_size": 42,
+      "kl_divergence": 0.1430318392164191,
+      "mae": 0.06349206349206349
+    },
+    {
+      "feature": "trip_purpose",
+      "value": "home",
+      "target": "primary_mode",
+      "sample_size": 352,
+      "kl_divergence": 0.14214835271366733,
+      "mae": 0.023538961038961026
+    },
+    {
+      "feature": "start_time",
+      "value": 18,
+      "target": "primary_mode",
+      "sample_size": 56,
+      "kl_divergence": 0.13848288629100586,
+      "mae": 0.035714285714285705
+    },
+    {
+      "feature": "start_time",
+      "value": 17,
+      "target": "duration_minutes",
+      "sample_size": 64,
+      "kl_divergence": 0.13818631783766946,
+      "mae": 0.06770833333333333
+    },
+    {
+      "feature": "education",
+      "value": "k_12",
+      "target": "primary_mode",
+      "sample_size": 117,
+      "kl_divergence": 0.135256843636476,
+      "mae": 0.05698005698005699
+    },
+    {
+      "feature": "employment_status",
+      "value": "employed",
+      "target": "duration_minutes",
+      "sample_size": 776,
+      "kl_divergence": 0.1332305652788513,
+      "mae": 0.03902798232695139
+    },
+    {
+      "feature": "household_size",
+      "value": 2,
+      "target": "duration_minutes",
+      "sample_size": 319,
+      "kl_divergence": 0.13164195195729628,
+      "mae": 0.028660994178235564
+    },
+    {
+      "feature": "trip_purpose",
+      "value": "eat",
+      "target": "duration_minutes",
+      "sample_size": 79,
+      "kl_divergence": 0.1312330376145729,
+      "mae": 0.07172995780590717
+    },
+    {
+      "feature": "start_time",
+      "value": 21,
+      "target": "duration_minutes",
+      "sample_size": 42,
+      "kl_divergence": 0.13051518578078586,
+      "mae": 0.07142857142857141
+    },
+    {
+      "feature": "start_time",
+      "value": 8,
+      "target": "duration_minutes",
+      "sample_size": 89,
+      "kl_divergence": 0.1298048055982134,
+      "mae": 0.06741573033707865
+    },
+    {
+      "feature": "start_time",
+      "value": 22,
+      "target": "primary_mode",
+      "sample_size": 20,
+      "kl_divergence": 0.12948715853966405,
+      "mae": 0.049999999999999996
+    },
+    {
+      "feature": "age_group",
+      "value": "18-24",
+      "target": "duration_minutes",
+      "sample_size": 89,
+      "kl_divergence": 0.12799666758724204,
+      "mae": 0.0711610486891386
+    },
+    {
+      "feature": "household_size",
+      "value": 1,
+      "target": "duration_minutes",
+      "sample_size": 265,
+      "kl_divergence": 0.1230470539594948,
+      "mae": 0.04851752021563343
+    },
+    {
+      "feature": "available_vehicles",
+      "value": "one",
+      "target": "duration_minutes",
+      "sample_size": 250,
+      "kl_divergence": 0.12165787830297084,
+      "mae": 0.042285714285714295
+    },
+    {
+      "feature": "start_time",
+      "value": 15,
+      "target": "duration_minutes",
+      "sample_size": 89,
+      "kl_divergence": 0.11772746249093939,
+      "mae": 0.0711610486891386
+    },
+    {
+      "feature": "age_group",
+      "value": "25-34",
+      "target": "primary_mode",
+      "sample_size": 243,
+      "kl_divergence": 0.11350896805322414,
+      "mae": 0.03174603174603174
+    },
+    {
+      "feature": "age_group",
+      "value": "45-54",
+      "target": "duration_minutes",
+      "sample_size": 145,
+      "kl_divergence": 0.1127656681032364,
+      "mae": 0.059770114942528735
+    },
+    {
+      "feature": "start_time",
+      "value": 16,
+      "target": "duration_minutes",
+      "sample_size": 68,
+      "kl_divergence": 0.11271658182937333,
+      "mae": 0.06862745098039216
+    },
+    {
+      "feature": "available_vehicles",
+      "value": "zero",
+      "target": "primary_mode",
+      "sample_size": 688,
+      "kl_divergence": 0.11150809333833786,
+      "mae": 0.027408637873754145
+    },
+    {
+      "feature": "income_group",
+      "value": "Under $10k",
+      "target": "primary_mode",
+      "sample_size": 63,
+      "kl_divergence": 0.10671221752118944,
+      "mae": 0.04232804232804233
+    },
+    {
+      "feature": "age_group",
+      "value": "25-34",
+      "target": "duration_minutes",
+      "sample_size": 243,
+      "kl_divergence": 0.10583240057886299,
+      "mae": 0.03409758965314522
+    },
+    {
+      "feature": "trip_purpose",
+      "value": "shop",
+      "target": "primary_mode",
+      "sample_size": 133,
+      "kl_divergence": 0.10408707550992034,
+      "mae": 0.04940923737916219
+    },
+    {
+      "feature": "start_time",
+      "value": 10,
+      "target": "duration_minutes",
+      "sample_size": 51,
+      "kl_divergence": 0.10001299181441349,
+      "mae": 0.05882352941176469
+    },
+    {
+      "feature": "education",
+      "value": "bachelors_degree",
+      "target": "duration_minutes",
+      "sample_size": 287,
+      "kl_divergence": 0.09968039667104125,
+      "mae": 0.06504065040650407
+    },
+    {
+      "feature": "start_time",
+      "value": 12,
+      "target": "duration_minutes",
+      "sample_size": 59,
+      "kl_divergence": 0.09570976603991228,
+      "mae": 0.050847457627118654
+    },
+    {
+      "feature": "trip_purpose",
+      "value": "school",
+      "target": "duration_minutes",
+      "sample_size": 46,
+      "kl_divergence": 0.09131549724556169,
+      "mae": 0.06956521739130435
+    },
+    {
+      "feature": "household_size",
+      "value": 1,
+      "target": "primary_mode",
+      "sample_size": 265,
+      "kl_divergence": 0.09081218334722249,
+      "mae": 0.028032345013477084
+    },
+    {
+      "feature": "household_size",
+      "value": 2,
+      "target": "primary_mode",
+      "sample_size": 319,
+      "kl_divergence": 0.09027810105458169,
+      "mae": 0.03045230631437527
+    },
+    {
+      "feature": "income_group",
+      "value": "$300k+",
+      "target": "primary_mode",
+      "sample_size": 236,
+      "kl_divergence": 0.08907803727330613,
+      "mae": 0.04116222760290559
+    },
+    {
+      "feature": "start_time",
+      "value": 20,
+      "target": "primary_mode",
+      "sample_size": 36,
+      "kl_divergence": 0.08544628970057766,
+      "mae": 0.05555555555555556
+    },
+    {
+      "feature": "trip_purpose",
+      "value": "maintenance",
+      "target": "primary_mode",
+      "sample_size": 30,
+      "kl_divergence": 0.08450888985768448,
+      "mae": 0.04444444444444445
+    },
+    {
+      "feature": "age_group",
+      "value": "55-64",
+      "target": "primary_mode",
+      "sample_size": 141,
+      "kl_divergence": 0.08435737803854673,
+      "mae": 0.02836879432624114
+    },
+    {
+      "feature": "age_group",
+      "value": "18-24",
+      "target": "primary_mode",
+      "sample_size": 89,
+      "kl_divergence": 0.08420175802664553,
+      "mae": 0.037453183520599245
+    },
+    {
+      "feature": "education",
+      "value": "k_12",
+      "target": "duration_minutes",
+      "sample_size": 117,
+      "kl_divergence": 0.08370758526025615,
+      "mae": 0.0455840455840456
+    },
+    {
+      "feature": "income_group",
+      "value": "$150k-$200k",
+      "target": "duration_minutes",
+      "sample_size": 105,
+      "kl_divergence": 0.0834422641101381,
+      "mae": 0.05714285714285714
+    },
+    {
+      "feature": "employment_status",
+      "value": "employed",
+      "target": "primary_mode",
+      "sample_size": 776,
+      "kl_divergence": 0.07211288453635728,
+      "mae": 0.02871870397643592
+    },
+    {
+      "feature": "income_group",
+      "value": "Under $10k",
+      "target": "duration_minutes",
+      "sample_size": 63,
+      "kl_divergence": 0.07058233328907597,
+      "mae": 0.05291005291005291
+    },
+    {
+      "feature": "start_time",
+      "value": 15,
+      "target": "primary_mode",
+      "sample_size": 89,
+      "kl_divergence": 0.06520176483951592,
+      "mae": 0.038523274478330656
+    },
+    {
+      "feature": "income_group",
+      "value": "$50k-$100k",
+      "target": "primary_mode",
+      "sample_size": 186,
+      "kl_divergence": 0.06203865803142948,
+      "mae": 0.024577572964669735
+    },
+    {
+      "feature": "start_time",
+      "value": 7,
+      "target": "duration_minutes",
+      "sample_size": 93,
+      "kl_divergence": 0.06077748020970324,
+      "mae": 0.05161290322580645
+    },
+    {
+      "feature": "employment_status",
+      "value": "under_16",
+      "target": "duration_minutes",
+      "sample_size": 64,
+      "kl_divergence": 0.06001605005779102,
+      "mae": 0.04375
+    },
+    {
+      "feature": "household_size",
+      "value": 3,
+      "target": "primary_mode",
+      "sample_size": 166,
+      "kl_divergence": 0.05885108964141801,
+      "mae": 0.032702237521514625
+    },
+    {
+      "feature": "education",
+      "value": "some_college",
+      "target": "primary_mode",
+      "sample_size": 142,
+      "kl_divergence": 0.057268349528021775,
+      "mae": 0.038229376257545265
+    },
+    {
+      "feature": "trip_purpose",
+      "value": "shop",
+      "target": "duration_minutes",
+      "sample_size": 133,
+      "kl_divergence": 0.05266341977781394,
+      "mae": 0.05263157894736842
+    },
+    {
+      "feature": "start_time",
+      "value": 16,
+      "target": "primary_mode",
+      "sample_size": 68,
+      "kl_divergence": 0.051260236212704084,
+      "mae": 0.02941176470588235
+    },
+    {
+      "feature": "household_size",
+      "value": 5,
+      "target": "primary_mode",
+      "sample_size": 65,
+      "kl_divergence": 0.04994497691625935,
+      "mae": 0.0358974358974359
+    },
+    {
+      "feature": "education",
+      "value": "bachelors_degree",
+      "target": "primary_mode",
+      "sample_size": 287,
+      "kl_divergence": 0.049244071353565885,
+      "mae": 0.021901443504230955
+    },
+    {
+      "feature": "education",
+      "value": "high_school",
+      "target": "duration_minutes",
+      "sample_size": 104,
+      "kl_divergence": 0.047866144649736965,
+      "mae": 0.04807692307692308
+    },
+    {
+      "feature": "age_group",
+      "value": "Under 18",
+      "target": "duration_minutes",
+      "sample_size": 73,
+      "kl_divergence": 0.04502793325955319,
+      "mae": 0.03835616438356163
+    },
+    {
+      "feature": "available_vehicles",
+      "value": "one",
+      "target": "primary_mode",
+      "sample_size": 250,
+      "kl_divergence": 0.04405044307626519,
+      "mae": 0.027428571428571438
+    },
+    {
+      "feature": "household_size",
+      "value": 6,
+      "target": "primary_mode",
+      "sample_size": 22,
+      "kl_divergence": 0.04283019470478943,
+      "mae": 0.03636363636363636
+    },
+    {
+      "feature": "household_size",
+      "value": 5,
+      "target": "duration_minutes",
+      "sample_size": 65,
+      "kl_divergence": 0.04179170576421086,
+      "mae": 0.041025641025641026
+    },
+    {
+      "feature": "trip_purpose",
+      "value": "eat",
+      "target": "primary_mode",
+      "sample_size": 79,
+      "kl_divergence": 0.04155325407639117,
+      "mae": 0.0325497287522604
+    },
+    {
+      "feature": "income_group",
+      "value": "$200k-$300k",
+      "target": "duration_minutes",
+      "sample_size": 122,
+      "kl_divergence": 0.039335362337968895,
+      "mae": 0.038251366120218566
+    },
+    {
+      "feature": "available_vehicles",
+      "value": "unknown_num_vehicles",
+      "target": "duration_minutes",
+      "sample_size": 35,
+      "kl_divergence": 0.03874190781209721,
+      "mae": 0.03428571428571428
+    },
+    {
+      "feature": "trip_purpose",
+      "value": "recreation",
+      "target": "duration_minutes",
+      "sample_size": 61,
+      "kl_divergence": 0.03735834856247213,
+      "mae": 0.03825136612021858
+    },
+    {
+      "feature": "household_size",
+      "value": 4,
+      "target": "duration_minutes",
+      "sample_size": 136,
+      "kl_divergence": 0.029823730969147984,
+      "mae": 0.03921568627450981
+    },
+    {
+      "feature": "start_time",
+      "value": 17,
+      "target": "primary_mode",
+      "sample_size": 64,
+      "kl_divergence": 0.02267578909718367,
+      "mae": 0.017857142857142856
+    }
+  ],
+  "top_error_examples": [
+    {
+      "idx": 926,
+      "true_mode": "walking",
+      "predicted_mode": "other_travel_mode",
+      "true_mode_weight": 0.0,
+      "pred_mode_weight": 1.0,
+      "confidence_gap": 1.0,
+      "age_group": "55-64",
+      "trip_purpose": "shop",
+      "start_time": 18
+    },
+    {
+      "idx": 244,
+      "true_mode": "walking",
+      "predicted_mode": "on_demand_auto",
+      "true_mode_weight": 0.0,
+      "pred_mode_weight": 1.0,
+      "confidence_gap": 1.0,
+      "age_group": "25-34",
+      "trip_purpose": "home",
+      "start_time": 23
+    },
+    {
+      "idx": 714,
+      "true_mode": "on_demand_auto",
+      "predicted_mode": "public_transit",
+      "true_mode_weight": 0.0,
+      "pred_mode_weight": 1.0,
+      "confidence_gap": 1.0,
+      "age_group": "18-24",
+      "trip_purpose": "home",
+      "start_time": 16
+    },
+    {
+      "idx": 741,
+      "true_mode": "auto_passenger",
+      "predicted_mode": "public_transit",
+      "true_mode_weight": 0.0,
+      "pred_mode_weight": 1.0,
+      "confidence_gap": 1.0,
+      "age_group": "55-64",
+      "trip_purpose": "eat",
+      "start_time": 17
+    },
+    {
+      "idx": 242,
+      "true_mode": "auto_passenger",
+      "predicted_mode": "public_transit",
+      "true_mode_weight": 0.0,
+      "pred_mode_weight": 0.9500000000000001,
+      "confidence_gap": 0.9500000000000001,
+      "age_group": "35-44",
+      "trip_purpose": "home",
+      "start_time": 23
+    },
+    {
+      "idx": 71,
+      "true_mode": "auto_passenger",
+      "predicted_mode": "walking",
+      "true_mode_weight": 0.0,
+      "pred_mode_weight": 0.95,
+      "confidence_gap": 0.95,
+      "age_group": "65+",
+      "trip_purpose": "home",
+      "start_time": 18
+    },
+    {
+      "idx": 682,
+      "true_mode": "auto_passenger",
+      "predicted_mode": "public_transit",
+      "true_mode_weight": 0.0,
+      "pred_mode_weight": 0.95,
+      "confidence_gap": 0.95,
+      "age_group": "65+",
+      "trip_purpose": "shop",
+      "start_time": 10
+    },
+    {
+      "idx": 150,
+      "true_mode": "auto_passenger",
+      "predicted_mode": "walking",
+      "true_mode_weight": 0.0,
+      "pred_mode_weight": 0.9,
+      "confidence_gap": 0.9,
+      "age_group": "35-44",
+      "trip_purpose": "eat",
+      "start_time": 16
+    },
+    {
+      "idx": 862,
+      "true_mode": "auto_passenger",
+      "predicted_mode": "public_transit",
+      "true_mode_weight": 0.0,
+      "pred_mode_weight": 0.9,
+      "confidence_gap": 0.9,
+      "age_group": "55-64",
+      "trip_purpose": "shop",
+      "start_time": 6
+    },
+    {
+      "idx": 921,
+      "true_mode": "auto_passenger",
+      "predicted_mode": "walking",
+      "true_mode_weight": 0.04,
+      "pred_mode_weight": 0.94,
+      "confidence_gap": 0.8999999999999999,
+      "age_group": "Under 18",
+      "trip_purpose": "home",
+      "start_time": 15
+    },
+    {
+      "idx": 570,
+      "true_mode": "auto_passenger",
+      "predicted_mode": "walking",
+      "true_mode_weight": 0.05,
+      "pred_mode_weight": 0.9,
+      "confidence_gap": 0.85,
+      "age_group": "Under 18",
+      "trip_purpose": "school",
+      "start_time": 8
+    },
+    {
+      "idx": 470,
+      "true_mode": "on_demand_auto",
+      "predicted_mode": "public_transit",
+      "true_mode_weight": 0.05,
+      "pred_mode_weight": 0.9,
+      "confidence_gap": 0.85,
+      "age_group": "55-64",
+      "trip_purpose": "recreation",
+      "start_time": 11
+    },
+    {
+      "idx": 514,
+      "true_mode": "on_demand_auto",
+      "predicted_mode": "private_auto",
+      "true_mode_weight": 0.0,
+      "pred_mode_weight": 0.8,
+      "confidence_gap": 0.8,
+      "age_group": "45-54",
+      "trip_purpose": "eat",
+      "start_time": 17
+    },
+    {
+      "idx": 826,
+      "true_mode": "on_demand_auto",
+      "predicted_mode": "public_transit",
+      "true_mode_weight": 0.0,
+      "pred_mode_weight": 0.8,
+      "confidence_gap": 0.8,
+      "age_group": "65+",
+      "trip_purpose": "eat",
+      "start_time": 11
+    },
+    {
+      "idx": 457,
+      "true_mode": "other_travel_mode",
+      "predicted_mode": "public_transit",
+      "true_mode_weight": 0.0,
+      "pred_mode_weight": 0.7999999999999999,
+      "confidence_gap": 0.7999999999999999,
+      "age_group": "65+",
+      "trip_purpose": "shop",
+      "start_time": 15
+    },
+    {
+      "idx": 30,
+      "true_mode": "auto_passenger",
+      "predicted_mode": "public_transit",
+      "true_mode_weight": 0.0,
+      "pred_mode_weight": 0.75,
+      "confidence_gap": 0.75,
+      "age_group": "45-54",
+      "trip_purpose": "eat",
+      "start_time": 17
+    },
+    {
+      "idx": 611,
+      "true_mode": "on_demand_auto",
+      "predicted_mode": "private_auto",
+      "true_mode_weight": 0.0,
+      "pred_mode_weight": 0.75,
+      "confidence_gap": 0.75,
+      "age_group": "35-44",
+      "trip_purpose": "home",
+      "start_time": 22
+    },
+    {
+      "idx": 716,
+      "true_mode": "auto_passenger",
+      "predicted_mode": "public_transit",
+      "true_mode_weight": 0.05,
+      "pred_mode_weight": 0.8,
+      "confidence_gap": 0.75,
+      "age_group": "65+",
+      "trip_purpose": "shop",
+      "start_time": 15
+    },
+    {
+      "idx": 597,
+      "true_mode": "biking",
+      "predicted_mode": "public_transit",
+      "true_mode_weight": 0.0,
+      "pred_mode_weight": 0.75,
+      "confidence_gap": 0.75,
+      "age_group": "55-64",
+      "trip_purpose": "maintenance",
+      "start_time": 6
+    },
+    {
+      "idx": 789,
+      "true_mode": "auto_passenger",
+      "predicted_mode": "public_transit",
+      "true_mode_weight": 0.0,
+      "pred_mode_weight": 0.75,
+      "confidence_gap": 0.75,
+      "age_group": "65+",
+      "trip_purpose": "home",
+      "start_time": 15
+    }
+  ]
+}

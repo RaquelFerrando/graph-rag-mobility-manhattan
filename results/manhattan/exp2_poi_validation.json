@@ -1,0 +1,11 @@
+{
+  "n_stops_total": 8278,
+  "n_home_skipped": 1846,
+  "n_distinct_sim_pois": 3292,
+  "n_real_pois_catalog": 38203,
+  "n_matched_both": 3362,
+  "n_real_only": 34841,
+  "n_sim_only": 0,
+  "kld": 1.6040074216066829,
+  "min_counts_smoothing": 10
+}

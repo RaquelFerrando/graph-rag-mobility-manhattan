@@ -1,0 +1,100 @@
+{
+  "n_agents": 1000,
+  "n_trips": 8278,
+  "stops_per_agent": {
+    "mean": 8.278,
+    "median": 8.0,
+    "min": 0,
+    "max": 19
+  },
+  "mode": {
+    "kld": 0.03949884880338111,
+    "mae": 0.01930002416042522,
+    "real_%": {
+      "public_transit": 0.379,
+      "walking": 0.323,
+      "auto_passenger": 0.109,
+      "private_auto": 0.072,
+      "biking": 0.052,
+      "on_demand_auto": 0.051,
+      "other_travel_mode": 0.014
+    },
+    "sim_%": {
+      "public_transit": 0.422,
+      "walking": 0.365,
+      "private_auto": 0.08,
+      "auto_passenger": 0.066,
+      "biking": 0.032,
+      "on_demand_auto": 0.022,
+      "other_travel_mode": 0.009,
+      "home": 0.003,
+      "stay": 0.0,
+      "stay_at_home": 0.0
+    }
+  },
+  "duration": {
+    "kld": 0.12739597180973528,
+    "mae": 0.025219280019328338,
+    "real_%": {
+      "0-10": 0.27,
+      "10-20": 0.263,
+      "20-30": 0.202,
+      "30-40": 0.132,
+      "40-50": 0.082,
+      "50-60": 0.046,
+      "60-70": 0.005
+    },
+    "sim_%": {
+      "0-10": 0.339,
+      "10-20": 0.32,
+      "20-30": 0.171,
+      "30-40": 0.105,
+      "40-50": 0.038,
+      "50-60": 0.028,
+      "0": 0.0,
+      "10-15": 0.0,
+      "0-0": 0.0
+    }
+  },
+  "trip_purpose": {
+    "kld": 0.14073502642186753,
+    "mae": 0.023757509865506968,
+    "real_%": {
+      "home": 0.352,
+      "work": 0.233,
+      "shop": 0.133,
+      "eat": 0.079,
+      "recreation": 0.061,
+      "social": 0.058,
+      "school": 0.046,
+      "maintenance": 0.03,
+      "other_activity_type": 0.008
+    },
+    "sim_%": {
+      "home": 0.223,
+      "eat": 0.193,
+      "work": 0.184,
+      "shop": 0.153,
+      "recreation": 0.124,
+      "social": 0.071,
+      "school": 0.032,
+      "maintenance": 0.016,
+      "other_activities": 0.003,
+      "lunch": 0.0,
+      "desire_to_leave_home": 0.0,
+      "other_activity_type": 0.0,
+      "trip_purpose": 0.0,
+      "home_to_shop": 0.0,
+      "home_to_work": 0.0,
+      "work_to_home": 0.0,
+      "home_to_eat": 0.0,
+      "eat_to_home": 0.0
+    }
+  },
+  "exp1_recap": {
+    "mode_kld": 0.061661239957286014,
+    "mode_mae": 0.02542857142857143,
+    "duration_kld": 0.1224951268202855,
+    "duration_mae": 0.037428571428571436
+  }
+}

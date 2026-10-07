@@ -8,10 +8,10 @@ with, this passes each eval row's REAL profile straight to MobilityAgent(profile
 which skips profile generation entirely (see agent.py: only calls _generate_profile()
 `if not profile`) - one LLM call per row (get_mode_prefernce), not 10-16.
 
-sample_num=50 matches what the paper actually found sufficient (and used for the full
-Experiment II population), not the 5000 we built for exploring the graph earlier -
-building this smaller reference graph is a one-time ~1-2 min cost (50 embedding calls),
-cached separately from the 5000-sample graph.
+sample_num=200 here, not the paper's own sweet spot of 50 (see the SAMPLE_NUM comment
+below for the sweep that found this), and not the 5000 we built for exploring the graph
+earlier. Building this reference graph is a one-time cost (200 embedding calls), cached
+separately from the 5000-sample graph.
 
 EVAL_FILE points at a freshly-drawn 1000-row eval set (replica-manhattan_trips_eval_max60_1000.csv,
 built by build_manhattan_eval_max60.py), not the original raw export. The paper's own

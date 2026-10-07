@@ -11,11 +11,18 @@ wheels/
 .venv
 *.DS_Store
 
-# Data
-data/zip
-data/raw
-data/geo/safegraph-cambridge-poi.csv
-data/geo/safegraph-sf-poi.csv
+# Editor
+.vscode/
+
+# Secrets (see .env.example for the structure)
+.env
+
+# Data (see "Data pipeline" in README.md: none of this is committed, every
+# file is either a raw external export or a deterministic rebuild from one)
+data/
 cache
 notebook
 test.ipynb
+
+# Slide deck (not part of the code/data this repo documents)
+project/

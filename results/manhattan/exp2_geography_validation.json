@@ -1,0 +1,10 @@
+{
+  "n_homes": 1000,
+  "n_matched": 1000,
+  "kld": 0.8977239101109077,
+  "mae": 0.0013339518026747625,
+  "n_tracts_used": 270,
+  "n_tracts_total": 310,
+  "avg_density_agent_tracts": 6986.491,
+  "avg_density_all_tracts": 5309.248387096774
+}

@@ -1,0 +1,41 @@
+{
+  "n_agents": 1000,
+  "n_agents_with_schedule": 999,
+  "avg_stops_per_agent": 8.278,
+  "median_stops_per_agent": 8.0,
+  "min_stops": 0,
+  "max_stops": 19,
+  "avg_home_stops_per_agent": 1.846,
+  "avg_non_home_stops_per_agent": 6.432,
+  "pct_schedules_out_of_order": 0.014014014014014014,
+  "first_activity_counts": {
+    "work": 636,
+    "school": 179,
+    "shop": 137,
+    "eat": 19,
+    "other_activities": 9,
+    "social": 9,
+    "recreation": 4,
+    "home": 3,
+    "desire_to_leave_home": 1,
+    "trip_purpose": 1,
+    "home_to_shop": 1
+  },
+  "last_activity_counts": {
+    "home": 829,
+    "social": 70,
+    "shop": 36,
+    "recreation": 22,
+    "eat": 20,
+    "work": 12,
+    "other_activities": 4,
+    "school": 2,
+    "desire_to_leave_home": 1,
+    "trip_purpose": 1,
+    "eat_to_home": 1,
+    "maintenance": 1
+  },
+  "pct_last_activity_is_home": 0.8298298298298298,
+  "starttime_by_hour_kld_vs_real": 0.29986267389929927,
+  "starttime_by_hour_mae_vs_real": 0.01601826125473142
+}

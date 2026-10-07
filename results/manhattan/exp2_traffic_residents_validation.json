@@ -1,0 +1,10 @@
+{
+  "n_real_resident_trips_routed": 3550,
+  "n_real_resident_no_path": 65,
+  "n_edges_compared": 7117,
+  "kld_resident_vs_resident": 0.2970258495108782,
+  "spearman_resident_vs_resident": 0.7869429656580559,
+  "spearman_pvalue": 0.0,
+  "kld_resident_sim_vs_everyone_real": 2.6929,
+  "spearman_resident_sim_vs_everyone_real": 0.1799
+}
